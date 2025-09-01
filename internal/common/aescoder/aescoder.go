@@ -30,6 +30,22 @@ type (
 	}
 )
 
+func DecodeAESKey(prv *rsa.PrivateKey, hexKey string) (*KeyAES, error) {
+	key, err := hex.DecodeString(hexKey)
+	if err != nil {
+		return nil, err
+	}
+	decryptedKey, err := rsa.DecryptPKCS1v15(rand.Reader, prv, key)
+
+	if err != nil {
+		return nil, err
+	}
+	return &KeyAES{
+		key:       decryptedKey,
+		cipherKey: hexKey,
+	}, nil
+}
+
 func NewAES(pub *rsa.PublicKey) (*KeyAES, error) {
 	key, err := generateRandom(2 * aes.BlockSize)
 	if err != nil {
@@ -49,8 +65,8 @@ func (k *KeyAES) GetKey() string {
 	return k.cipherKey
 }
 
-func NewReader(r io.ReadCloser, key []byte) (*AesReader, error) {
-	aesblock, err := aes.NewCipher(key)
+func NewReader(r io.ReadCloser, key *KeyAES) (*AesReader, error) {
+	aesblock, err := aes.NewCipher(key.key)
 
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
@@ -64,7 +80,7 @@ func NewReader(r io.ReadCloser, key []byte) (*AesReader, error) {
 
 	return &AesReader{
 		r:      r,
-		nonce:  key[len(key)-aesgcm.NonceSize():],
+		nonce:  key.key[len(key.key)-aesgcm.NonceSize():],
 		aesgcm: aesgcm,
 	}, nil
 }
@@ -78,7 +94,20 @@ func (h *AesReader) Read(p []byte) (int, error) {
 	return n, err
 }
 
+func (h *AesReader) ReadOne(p []byte) ([]byte, error) {
+	n, _ := h.r.Read(p)
+	if n > 0 {
+		np, err := h.aesgcm.Open(nil, h.nonce, p, nil)
+		if err != nil {
+			return nil, err
+		}
+		return np, err
+	}
+	return p, nil
+}
+
 func (h *AesReader) Close() error {
+	h.r.Close()
 	return nil
 }
 
@@ -112,6 +141,6 @@ func (a *AesWriter) Write(p []byte) (int, error) {
 	if p == nil {
 		return 0, nil
 	}
-	_ = a.aesgcm.Seal(p[0:], a.nonce, p, nil)
-	return a.w.Write(p)
+	k := a.aesgcm.Seal( /*p[0:]*/ nil, a.nonce, p, nil)
+	return a.w.Write(k)
 }

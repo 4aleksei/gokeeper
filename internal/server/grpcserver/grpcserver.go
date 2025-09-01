@@ -3,6 +3,7 @@ package grpcserver
 
 import (
 	"context"
+	"fmt"
 	"net"
 
 	/*
@@ -201,9 +202,9 @@ func InterceptorLogger(l *zap.Logger) logging.Logger {
 
 func isMethodLoginRegister(info *grpc.UnaryServerInfo) bool {
 	switch info.FullMethod {
-	case "pb.LoginUser":
+	case "/grpcgokeeper.KeeperService/LoginUser":
 		return true
-	case "pb.RegisterUser":
+	case "/grpcgokeeper.KeeperService/RegisterUser":
 		return true
 	default:
 		return false
@@ -212,7 +213,7 @@ func isMethodLoginRegister(info *grpc.UnaryServerInfo) bool {
 
 func (a *authInterceptor) UnaryAuthMiddleware(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	// get metadata object
-
+	fmt.Printf("Intercepting call to: %s\n", info.FullMethod)
 	if isMethodLoginRegister(info) {
 		return handler(ctx, req)
 	}

@@ -10,21 +10,27 @@ import (
 	"github.com/4aleksei/gokeeper/internal/server/config"
 	"github.com/4aleksei/gokeeper/internal/server/jwtauth"
 	"go.uber.org/zap"
+	// "github.com/4aleksei/gokeeper/internal/common/datacrypto"
 )
 
 type (
 	serverStorage interface {
 		AddUser(context.Context, string, string) (*store.User, error)
 		GetUser(context.Context, string) (*store.User, error)
-		AddData(context.Context, *store.UserData) error
-		GetData(context.Context, string) (*store.UserData, error)
+		AddData(context.Context, *store.UserDataCrypt) error
+		GetData(context.Context, string) (*store.UserDataCrypt, error)
+	}
+	serverEncoder interface {
+		Encrypt(*store.UserData) (*store.UserDataCrypt, error)
+		Decrypt(*store.UserDataCrypt) (*store.UserData, error)
 	}
 
 	HandlerService struct {
-		store serverStorage
-		l     *zap.Logger
-		auth  *jwtauth.AuthService
-		cfg   *config.Config
+		store   serverStorage
+		l       *zap.Logger
+		auth    *jwtauth.AuthService
+		cfg     *config.Config
+		encoder serverEncoder
 	}
 )
 
@@ -33,12 +39,13 @@ var (
 	ErrIncorectUserId = errors.New("error, id user error")
 )
 
-func New(s serverStorage, l *zap.Logger, c *config.Config) *HandlerService {
+func New(s serverStorage, enc serverEncoder, l *zap.Logger, c *config.Config) *HandlerService {
 	return &HandlerService{
-		store: s,
-		l:     l,
-		cfg:   c,
-		auth:  jwtauth.New(c),
+		store:   s,
+		l:       l,
+		cfg:     c,
+		auth:    jwtauth.New(c),
+		encoder: enc,
 	}
 }
 
@@ -79,27 +86,28 @@ func (serv *HandlerService) AddData(ctx context.Context, userId uint64, typeData
 		UserData: data,
 		MetaData: metadata,
 	}
-	err := serv.store.AddData(ctx, dataUser)
+	encDataUser, err := serv.encoder.Encrypt(dataUser)
 	if err != nil {
 		return "", err
 	}
-	return dataUser.Uuid, nil
+	err = serv.store.AddData(ctx, encDataUser)
+	if err != nil {
+		return "", err
+	}
+	return encDataUser.Uuid, nil
 }
 
 func (serv *HandlerService) GetData(ctx context.Context, userId uint64, uuid string) (*store.UserData, error) {
-	data, err := serv.store.GetData(ctx, uuid)
+	dataEnc, err := serv.store.GetData(ctx, uuid)
 	if err != nil {
 		return nil, err
 	}
-	if data.Id != userId {
+	if dataEnc.Id != userId {
 		return nil, ErrIncorectUserId
 	}
-  
-	 //decData:=&store.UserData{
-//
-//
-//	 }
-
-	
-	return data, err
+	dataUser, err := serv.encoder.Decrypt(dataEnc)
+	if err != nil {
+		return nil, err
+	}
+	return dataUser, err
 }

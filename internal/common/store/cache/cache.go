@@ -22,19 +22,28 @@ type (
 
 	cacheStore struct {
 		lock      sync.RWMutex
-		uuidUsers map[uint64][]*store.UserData
-		dataUsers map[string]*store.UserData
+		uuidUsers map[uint64][]*store.UserDataCrypt
+		dataUsers map[string]*store.UserDataCrypt
 	}
 )
 
 var (
 	ErrValueExists   = errors.New("error, value exists")
+	ErrUserExists    = errors.New("error, user exists")
 	ErrUserNotFound  = errors.New("error,no user")
 	ErrValueNotFound = errors.New("error,no value")
 	ErrNoDB          = errors.New("no db")
 )
 
-func (c *cacheStore) AddData(userdata *store.UserData) error {
+func New(l *zap.Logger) *Store {
+	stor := &Store{l: l}
+
+	stor.usersData.uuidUsers = make(map[uint64][]*store.UserDataCrypt)
+	stor.usersData.dataUsers = make(map[string]*store.UserDataCrypt)
+	return stor
+}
+
+func (c *cacheStore) AddData(userdata *store.UserDataCrypt) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	_, exis := c.dataUsers[userdata.Uuid]
@@ -46,7 +55,7 @@ func (c *cacheStore) AddData(userdata *store.UserData) error {
 	return nil
 }
 
-func (c *cacheStore) GetData(uuid string) (*store.UserData, error) {
+func (c *cacheStore) GetData(uuid string) (*store.UserDataCrypt, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 	data, ok := c.dataUsers[uuid]
@@ -56,7 +65,7 @@ func (c *cacheStore) GetData(uuid string) (*store.UserData, error) {
 	return data, nil
 }
 
-func (c *cacheStore) GetList(userID uint64) ([]*store.UserData, error) {
+func (c *cacheStore) GetList(userID uint64) ([]*store.UserDataCrypt, error) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 	data, ok := c.uuidUsers[userID]
@@ -64,10 +73,6 @@ func (c *cacheStore) GetList(userID uint64) ([]*store.UserData, error) {
 		return nil, ErrValueNotFound
 	}
 	return data, nil
-}
-
-func New(l *zap.Logger) *Store {
-	return &Store{l: l}
 }
 
 var idUsers atomic.Uint64
@@ -85,7 +90,7 @@ func (s *Store) AddUser(ctx context.Context, user string, pass string) (*store.U
 	}
 	_, ok := s.users.LoadOrStore(user, userSt)
 	if ok {
-		return nil, ErrUserNotFound
+		return nil, ErrUserExists
 	}
 	return userSt, nil
 }
@@ -95,15 +100,13 @@ func (s *Store) GetUser(ctx context.Context, user string) (*store.User, error) {
 	if ok {
 		return val.(*store.User), nil
 	}
-	return nil, ErrValueNotFound
+	return nil, ErrUserNotFound
 }
 
-func (s *Store) AddData(ctx context.Context, userdata *store.UserData) error {
+func (s *Store) AddData(ctx context.Context, userdata *store.UserDataCrypt) error {
 	uuid := uuid.New()
 	userdata.Uuid = uuid.String()
 	userdata.TimeStamp = time.Now()
-
-	//userdata.EnKey= datacrypto.encrypt(userdata.UserData,userdata.MetaData)
 	err := s.usersData.AddData(userdata)
 	if err != nil {
 		return ErrValueExists
@@ -111,13 +114,10 @@ func (s *Store) AddData(ctx context.Context, userdata *store.UserData) error {
 	return nil
 }
 
-func (s *Store) GetData(ctx context.Context, uuid string) (*store.UserData, error) {
+func (s *Store) GetData(ctx context.Context, uuid string) (*store.UserDataCrypt, error) {
 	data, err := s.usersData.GetData(uuid)
 	if err != nil {
 		return nil, ErrValueNotFound
 	}
-
-	// userdata.UserData,userdata.MetaData=datacrypto.decrypt(userdata.UserData,userdata.MetaData,userdata.EnKey)
-
 	return data, nil
 }

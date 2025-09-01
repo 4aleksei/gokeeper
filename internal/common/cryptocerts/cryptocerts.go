@@ -5,57 +5,15 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/hex"
 	"encoding/pem"
 	"errors"
-	"io"
 	"os"
-
-	"github.com/4aleksei/gokeeper/internal/common/aescoder"
 )
-
-type aesReader struct {
-	r  io.ReadCloser
-	zr *aescoder.AesReader
-}
 
 var (
 	ErrNoPublic = errors.New("не удалось декодировать публичный ключ")
 	ErrNoRSA    = errors.New("не удалось привести к *rsa.PublicKey")
 )
-
-func NewAesReader(r io.ReadCloser, privateKeyLoaded *rsa.PrivateKey, aesSkey string) (*aesReader, error) {
-	key, err := hex.DecodeString(aesSkey)
-	if err != nil {
-		return nil, err
-	}
-
-	decryptedKey, err := rsa.DecryptPKCS1v15(rand.Reader, privateKeyLoaded, key)
-	if err != nil {
-		return nil, err
-	}
-
-	zr, err := aescoder.NewReader(r, decryptedKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return &aesReader{
-		r:  r,
-		zr: zr,
-	}, nil
-}
-
-func (c *aesReader) Read(p []byte) (n int, err error) {
-	return c.zr.Read(p)
-}
-
-func (c *aesReader) Close() error {
-	if err := c.r.Close(); err != nil {
-		return err
-	}
-	return c.zr.Close()
-}
 
 func LoadKey(name string) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	privateKeyPEM, err := os.ReadFile(name)
@@ -71,6 +29,14 @@ func LoadKey(name string) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 		return nil, nil, err
 	}
 	return privateKeyLoaded, &privateKeyLoaded.PublicKey, nil
+}
+
+func GenerateKey() (*rsa.PrivateKey, *rsa.PublicKey, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, nil, err
+	}
+	return privateKey, &privateKey.PublicKey, nil
 }
 
 /*func LoadPublicKey(name string) (*rsa.PublicKey, error) {

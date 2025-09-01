@@ -18,7 +18,16 @@ type (
 		TypeData  int
 		UserData  string
 		MetaData  string
-		EnKey     string
 		TimeStamp time.Time
+	}
+
+	UserDataCrypt struct {
+		Id         uint64
+		Uuid       string
+		TypeData   int
+		UserDataEn []byte
+		MetaDataEn []byte
+		EnKey      string
+		TimeStamp  time.Time
 	}
 )
