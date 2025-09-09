@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"errors"
 
 	"github.com/4aleksei/gokeeper/internal/client/config"
 	"github.com/4aleksei/gokeeper/internal/client/grpcclient"
@@ -12,6 +13,10 @@ import (
 	"github.com/4aleksei/gokeeper/internal/client/service"
 	"github.com/4aleksei/gokeeper/internal/common/logger"
 	"github.com/4aleksei/gokeeper/internal/common/store"
+)
+
+var (
+	ErrParamsNotEnough = errors.New("error parameters not enough")
 )
 
 func Run() error {
@@ -32,6 +37,12 @@ func Run() error {
 	srv := service.New(client)
 
 	commandLogin := func(ctx context.Context, s ...string) *responses.Respond {
+		if len(s) < 3 {
+			return responses.New(
+				responses.AddError(ErrParamsNotEnough),
+			)
+		}
+
 		token, err := srv.SendLogin(ctx, s[1], s[2])
 		if err != nil {
 			return responses.New(
@@ -45,6 +56,11 @@ func Run() error {
 	}
 
 	commandRegister := func(ctx context.Context, s ...string) *responses.Respond {
+		if len(s) < 3 {
+			return responses.New(
+				responses.AddError(ErrParamsNotEnough),
+			)
+		}
 		token, err := srv.SendRegister(ctx, s[1], s[2])
 		if err != nil {
 			return responses.New(
@@ -58,6 +74,11 @@ func Run() error {
 	}
 
 	commandData := func(ctx context.Context, s ...string) *responses.Respond {
+		if len(s) < 4 {
+			return responses.New(
+				responses.AddError(ErrParamsNotEnough),
+			)
+		}
 		t, err := store.GetType(s[1])
 		if err != nil {
 			return responses.New(
@@ -77,6 +98,11 @@ func Run() error {
 	}
 
 	commandGetData := func(ctx context.Context, s ...string) *responses.Respond {
+		if len(s) < 2 {
+			return responses.New(
+				responses.AddError(ErrParamsNotEnough),
+			)
+		}
 		data, err := srv.GetData(ctx, s[0], s[1])
 		if err != nil {
 			return responses.New(
