@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v3.6.1
-// source: gokeeper.proto
+// source: api/proto/gokeeper.proto
 
 package proto
 
@@ -25,6 +25,7 @@ const (
 	KeeperService_GetData_FullMethodName      = "/grpcgokeeper.KeeperService/GetData"
 	KeeperService_UploadData_FullMethodName   = "/grpcgokeeper.KeeperService/UploadData"
 	KeeperService_DownloadData_FullMethodName = "/grpcgokeeper.KeeperService/DownloadData"
+	KeeperService_GetList_FullMethodName      = "/grpcgokeeper.KeeperService/GetList"
 )
 
 // KeeperServiceClient is the client API for KeeperService service.
@@ -37,6 +38,7 @@ type KeeperServiceClient interface {
 	GetData(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (*UserData, error)
 	UploadData(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[DataChunk, ResponseAddData], error)
 	DownloadData(ctx context.Context, in *DownloadRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DataChunk], error)
+	GetList(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[UserData], error)
 }
 
 type keeperServiceClient struct {
@@ -119,6 +121,25 @@ func (c *keeperServiceClient) DownloadData(ctx context.Context, in *DownloadRequ
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type KeeperService_DownloadDataClient = grpc.ServerStreamingClient[DataChunk]
 
+func (c *keeperServiceClient) GetList(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[UserData], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &KeeperService_ServiceDesc.Streams[2], KeeperService_GetList_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[ListRequest, UserData]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type KeeperService_GetListClient = grpc.ServerStreamingClient[UserData]
+
 // KeeperServiceServer is the server API for KeeperService service.
 // All implementations must embed UnimplementedKeeperServiceServer
 // for forward compatibility.
@@ -129,6 +150,7 @@ type KeeperServiceServer interface {
 	GetData(context.Context, *DownloadRequest) (*UserData, error)
 	UploadData(grpc.ClientStreamingServer[DataChunk, ResponseAddData]) error
 	DownloadData(*DownloadRequest, grpc.ServerStreamingServer[DataChunk]) error
+	GetList(*ListRequest, grpc.ServerStreamingServer[UserData]) error
 	mustEmbedUnimplementedKeeperServiceServer()
 }
 
@@ -156,6 +178,9 @@ func (UnimplementedKeeperServiceServer) UploadData(grpc.ClientStreamingServer[Da
 }
 func (UnimplementedKeeperServiceServer) DownloadData(*DownloadRequest, grpc.ServerStreamingServer[DataChunk]) error {
 	return status.Errorf(codes.Unimplemented, "method DownloadData not implemented")
+}
+func (UnimplementedKeeperServiceServer) GetList(*ListRequest, grpc.ServerStreamingServer[UserData]) error {
+	return status.Errorf(codes.Unimplemented, "method GetList not implemented")
 }
 func (UnimplementedKeeperServiceServer) mustEmbedUnimplementedKeeperServiceServer() {}
 func (UnimplementedKeeperServiceServer) testEmbeddedByValue()                       {}
@@ -268,6 +293,17 @@ func _KeeperService_DownloadData_Handler(srv interface{}, stream grpc.ServerStre
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type KeeperService_DownloadDataServer = grpc.ServerStreamingServer[DataChunk]
 
+func _KeeperService_GetList_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(KeeperServiceServer).GetList(m, &grpc.GenericServerStream[ListRequest, UserData]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type KeeperService_GetListServer = grpc.ServerStreamingServer[UserData]
+
 // KeeperService_ServiceDesc is the grpc.ServiceDesc for KeeperService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -303,6 +339,11 @@ var KeeperService_ServiceDesc = grpc.ServiceDesc{
 			Handler:       _KeeperService_DownloadData_Handler,
 			ServerStreams: true,
 		},
+		{
+			StreamName:    "GetList",
+			Handler:       _KeeperService_GetList_Handler,
+			ServerStreams: true,
+		},
 	},
-	Metadata: "gokeeper.proto",
+	Metadata: "api/proto/gokeeper.proto",
 }

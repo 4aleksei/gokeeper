@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v3.6.1
-// source: gokeeper.proto
+// source: api/proto/gokeeper.proto
 
 package proto
 
@@ -21,96 +21,56 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type UserData_Type int32
+type TypeData int32
 
 const (
-	UserData_LOGINDATA UserData_Type = 0
-	UserData_CARDDATA  UserData_Type = 1
+	TypeData_LOGINDATA  TypeData = 0
+	TypeData_CARDDATA   TypeData = 1
+	TypeData_TEXTDATA   TypeData = 2
+	TypeData_BINARYDATA TypeData = 3
 )
 
-// Enum value maps for UserData_Type.
+// Enum value maps for TypeData.
 var (
-	UserData_Type_name = map[int32]string{
+	TypeData_name = map[int32]string{
 		0: "LOGINDATA",
 		1: "CARDDATA",
+		2: "TEXTDATA",
+		3: "BINARYDATA",
 	}
-	UserData_Type_value = map[string]int32{
-		"LOGINDATA": 0,
-		"CARDDATA":  1,
+	TypeData_value = map[string]int32{
+		"LOGINDATA":  0,
+		"CARDDATA":   1,
+		"TEXTDATA":   2,
+		"BINARYDATA": 3,
 	}
 )
 
-func (x UserData_Type) Enum() *UserData_Type {
-	p := new(UserData_Type)
+func (x TypeData) Enum() *TypeData {
+	p := new(TypeData)
 	*p = x
 	return p
 }
 
-func (x UserData_Type) String() string {
+func (x TypeData) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (UserData_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_gokeeper_proto_enumTypes[0].Descriptor()
+func (TypeData) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_proto_gokeeper_proto_enumTypes[0].Descriptor()
 }
 
-func (UserData_Type) Type() protoreflect.EnumType {
-	return &file_gokeeper_proto_enumTypes[0]
+func (TypeData) Type() protoreflect.EnumType {
+	return &file_api_proto_gokeeper_proto_enumTypes[0]
 }
 
-func (x UserData_Type) Number() protoreflect.EnumNumber {
+func (x TypeData) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use UserData_Type.Descriptor instead.
-func (UserData_Type) EnumDescriptor() ([]byte, []int) {
-	return file_gokeeper_proto_rawDescGZIP(), []int{2, 0}
-}
-
-type DataChunk_Type int32
-
-const (
-	DataChunk_TEXTDATA   DataChunk_Type = 0
-	DataChunk_BINARYDATA DataChunk_Type = 1
-)
-
-// Enum value maps for DataChunk_Type.
-var (
-	DataChunk_Type_name = map[int32]string{
-		0: "TEXTDATA",
-		1: "BINARYDATA",
-	}
-	DataChunk_Type_value = map[string]int32{
-		"TEXTDATA":   0,
-		"BINARYDATA": 1,
-	}
-)
-
-func (x DataChunk_Type) Enum() *DataChunk_Type {
-	p := new(DataChunk_Type)
-	*p = x
-	return p
-}
-
-func (x DataChunk_Type) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (DataChunk_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_gokeeper_proto_enumTypes[1].Descriptor()
-}
-
-func (DataChunk_Type) Type() protoreflect.EnumType {
-	return &file_gokeeper_proto_enumTypes[1]
-}
-
-func (x DataChunk_Type) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use DataChunk_Type.Descriptor instead.
-func (DataChunk_Type) EnumDescriptor() ([]byte, []int) {
-	return file_gokeeper_proto_rawDescGZIP(), []int{5, 0}
+// Deprecated: Use TypeData.Descriptor instead.
+func (TypeData) EnumDescriptor() ([]byte, []int) {
+	return file_api_proto_gokeeper_proto_rawDescGZIP(), []int{0}
 }
 
 type LoginRequest struct {
@@ -123,7 +83,7 @@ type LoginRequest struct {
 
 func (x *LoginRequest) Reset() {
 	*x = LoginRequest{}
-	mi := &file_gokeeper_proto_msgTypes[0]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -135,7 +95,7 @@ func (x *LoginRequest) String() string {
 func (*LoginRequest) ProtoMessage() {}
 
 func (x *LoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gokeeper_proto_msgTypes[0]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -148,7 +108,7 @@ func (x *LoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
 func (*LoginRequest) Descriptor() ([]byte, []int) {
-	return file_gokeeper_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_gokeeper_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *LoginRequest) GetName() string {
@@ -174,7 +134,7 @@ type LoginResponse struct {
 
 func (x *LoginResponse) Reset() {
 	*x = LoginResponse{}
-	mi := &file_gokeeper_proto_msgTypes[1]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -186,7 +146,7 @@ func (x *LoginResponse) String() string {
 func (*LoginResponse) ProtoMessage() {}
 
 func (x *LoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_gokeeper_proto_msgTypes[1]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -199,7 +159,7 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
 func (*LoginResponse) Descriptor() ([]byte, []int) {
-	return file_gokeeper_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_gokeeper_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *LoginResponse) GetToken() string {
@@ -211,7 +171,7 @@ func (x *LoginResponse) GetToken() string {
 
 type UserData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          UserData_Type          `protobuf:"varint,1,opt,name=type,proto3,enum=grpcgokeeper.UserData_Type" json:"type,omitempty"` // тип данных
+	Type          TypeData               `protobuf:"varint,1,opt,name=type,proto3,enum=grpcgokeeper.TypeData" json:"type,omitempty"` // тип данных
 	Data          string                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	Metadata      string                 `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -220,7 +180,7 @@ type UserData struct {
 
 func (x *UserData) Reset() {
 	*x = UserData{}
-	mi := &file_gokeeper_proto_msgTypes[2]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -232,7 +192,7 @@ func (x *UserData) String() string {
 func (*UserData) ProtoMessage() {}
 
 func (x *UserData) ProtoReflect() protoreflect.Message {
-	mi := &file_gokeeper_proto_msgTypes[2]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -245,14 +205,14 @@ func (x *UserData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserData.ProtoReflect.Descriptor instead.
 func (*UserData) Descriptor() ([]byte, []int) {
-	return file_gokeeper_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_gokeeper_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *UserData) GetType() UserData_Type {
+func (x *UserData) GetType() TypeData {
 	if x != nil {
 		return x.Type
 	}
-	return UserData_LOGINDATA
+	return TypeData_LOGINDATA
 }
 
 func (x *UserData) GetData() string {
@@ -278,7 +238,7 @@ type ResponseAddData struct {
 
 func (x *ResponseAddData) Reset() {
 	*x = ResponseAddData{}
-	mi := &file_gokeeper_proto_msgTypes[3]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -290,7 +250,7 @@ func (x *ResponseAddData) String() string {
 func (*ResponseAddData) ProtoMessage() {}
 
 func (x *ResponseAddData) ProtoReflect() protoreflect.Message {
-	mi := &file_gokeeper_proto_msgTypes[3]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -303,7 +263,7 @@ func (x *ResponseAddData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResponseAddData.ProtoReflect.Descriptor instead.
 func (*ResponseAddData) Descriptor() ([]byte, []int) {
-	return file_gokeeper_proto_rawDescGZIP(), []int{3}
+	return file_api_proto_gokeeper_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ResponseAddData) GetUuid() string {
@@ -311,6 +271,42 @@ func (x *ResponseAddData) GetUuid() string {
 		return x.Uuid
 	}
 	return ""
+}
+
+type ListRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRequest) Reset() {
+	*x = ListRequest{}
+	mi := &file_api_proto_gokeeper_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRequest) ProtoMessage() {}
+
+func (x *ListRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_gokeeper_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRequest.ProtoReflect.Descriptor instead.
+func (*ListRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_gokeeper_proto_rawDescGZIP(), []int{4}
 }
 
 type DownloadRequest struct {
@@ -322,7 +318,7 @@ type DownloadRequest struct {
 
 func (x *DownloadRequest) Reset() {
 	*x = DownloadRequest{}
-	mi := &file_gokeeper_proto_msgTypes[4]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -334,7 +330,7 @@ func (x *DownloadRequest) String() string {
 func (*DownloadRequest) ProtoMessage() {}
 
 func (x *DownloadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_gokeeper_proto_msgTypes[4]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -347,7 +343,7 @@ func (x *DownloadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DownloadRequest.ProtoReflect.Descriptor instead.
 func (*DownloadRequest) Descriptor() ([]byte, []int) {
-	return file_gokeeper_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_gokeeper_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *DownloadRequest) GetUuid() string {
@@ -359,10 +355,10 @@ func (x *DownloadRequest) GetUuid() string {
 
 type DataChunk struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`                                   // The actual byte data for the chunk
-	Offset        int64                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`                              // Optional: for tracking progress/resuming
-	Metadata      string                 `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`                           //Optional
-	Type          DataChunk_Type         `protobuf:"varint,4,opt,name=type,proto3,enum=grpcgokeeper.DataChunk_Type" json:"type,omitempty"` // тип данных
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`                             // The actual byte data for the chunk
+	Offset        int64                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`                        // Optional: for tracking progress/resuming
+	Metadata      string                 `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`                     //Optional
+	Type          TypeData               `protobuf:"varint,4,opt,name=type,proto3,enum=grpcgokeeper.TypeData" json:"type,omitempty"` // тип данных
 	Size          int64                  `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -370,7 +366,7 @@ type DataChunk struct {
 
 func (x *DataChunk) Reset() {
 	*x = DataChunk{}
-	mi := &file_gokeeper_proto_msgTypes[5]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -382,7 +378,7 @@ func (x *DataChunk) String() string {
 func (*DataChunk) ProtoMessage() {}
 
 func (x *DataChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_gokeeper_proto_msgTypes[5]
+	mi := &file_api_proto_gokeeper_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -395,7 +391,7 @@ func (x *DataChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataChunk.ProtoReflect.Descriptor instead.
 func (*DataChunk) Descriptor() ([]byte, []int) {
-	return file_gokeeper_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_gokeeper_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DataChunk) GetData() []byte {
@@ -419,11 +415,11 @@ func (x *DataChunk) GetMetadata() string {
 	return ""
 }
 
-func (x *DataChunk) GetType() DataChunk_Type {
+func (x *DataChunk) GetType() TypeData {
 	if x != nil {
 		return x.Type
 	}
-	return DataChunk_TEXTDATA
+	return TypeData_LOGINDATA
 }
 
 func (x *DataChunk) GetSize() int64 {
@@ -433,37 +429,37 @@ func (x *DataChunk) GetSize() int64 {
 	return 0
 }
 
-var File_gokeeper_proto protoreflect.FileDescriptor
+var File_api_proto_gokeeper_proto protoreflect.FileDescriptor
 
-const file_gokeeper_proto_rawDesc = "" +
+const file_api_proto_gokeeper_proto_rawDesc = "" +
 	"\n" +
-	"\x0egokeeper.proto\x12\fgrpcgokeeper\">\n" +
+	"\x18api/proto/gokeeper.proto\x12\fgrpcgokeeper\">\n" +
 	"\fLoginRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"%\n" +
 	"\rLoginResponse\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"\x90\x01\n" +
-	"\bUserData\x12/\n" +
-	"\x04type\x18\x01 \x01(\x0e2\x1b.grpcgokeeper.UserData.TypeR\x04type\x12\x12\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"f\n" +
+	"\bUserData\x12*\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x16.grpcgokeeper.TypeDataR\x04type\x12\x12\n" +
 	"\x04data\x18\x02 \x01(\tR\x04data\x12\x1a\n" +
-	"\bmetadata\x18\x03 \x01(\tR\bmetadata\"#\n" +
-	"\x04Type\x12\r\n" +
-	"\tLOGINDATA\x10\x00\x12\f\n" +
-	"\bCARDDATA\x10\x01\"%\n" +
+	"\bmetadata\x18\x03 \x01(\tR\bmetadata\"%\n" +
 	"\x0fResponseAddData\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"%\n" +
+	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\r\n" +
+	"\vListRequest\"%\n" +
 	"\x0fDownloadRequest\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\xbf\x01\n" +
+	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\x93\x01\n" +
 	"\tDataChunk\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x03R\x06offset\x12\x1a\n" +
-	"\bmetadata\x18\x03 \x01(\tR\bmetadata\x120\n" +
-	"\x04type\x18\x04 \x01(\x0e2\x1c.grpcgokeeper.DataChunk.TypeR\x04type\x12\x12\n" +
-	"\x04size\x18\x05 \x01(\x03R\x04size\"$\n" +
-	"\x04Type\x12\f\n" +
-	"\bTEXTDATA\x10\x00\x12\x0e\n" +
+	"\bmetadata\x18\x03 \x01(\tR\bmetadata\x12*\n" +
+	"\x04type\x18\x04 \x01(\x0e2\x16.grpcgokeeper.TypeDataR\x04type\x12\x12\n" +
+	"\x04size\x18\x05 \x01(\x03R\x04size*E\n" +
+	"\bTypeData\x12\r\n" +
+	"\tLOGINDATA\x10\x00\x12\f\n" +
+	"\bCARDDATA\x10\x01\x12\f\n" +
+	"\bTEXTDATA\x10\x02\x12\x0e\n" +
 	"\n" +
-	"BINARYDATA\x10\x012\xb4\x03\n" +
+	"BINARYDATA\x10\x032\xf4\x03\n" +
 	"\rKeeperService\x12D\n" +
 	"\tLoginUser\x12\x1a.grpcgokeeper.LoginRequest\x1a\x1b.grpcgokeeper.LoginResponse\x12G\n" +
 	"\fRegisterUser\x12\x1a.grpcgokeeper.LoginRequest\x1a\x1b.grpcgokeeper.LoginResponse\x12@\n" +
@@ -471,75 +467,78 @@ const file_gokeeper_proto_rawDesc = "" +
 	"\aGetData\x12\x1d.grpcgokeeper.DownloadRequest\x1a\x16.grpcgokeeper.UserData\x12F\n" +
 	"\n" +
 	"UploadData\x12\x17.grpcgokeeper.DataChunk\x1a\x1d.grpcgokeeper.ResponseAddData(\x01\x12H\n" +
-	"\fDownloadData\x12\x1d.grpcgokeeper.DownloadRequest\x1a\x17.grpcgokeeper.DataChunk0\x01B(Z&github.com/4aleksei/gokeeper/pkg/protob\x06proto3"
+	"\fDownloadData\x12\x1d.grpcgokeeper.DownloadRequest\x1a\x17.grpcgokeeper.DataChunk0\x01\x12>\n" +
+	"\aGetList\x12\x19.grpcgokeeper.ListRequest\x1a\x16.grpcgokeeper.UserData0\x01B,Z*github.com/4aleksei/gokeeper/pkg/api/protob\x06proto3"
 
 var (
-	file_gokeeper_proto_rawDescOnce sync.Once
-	file_gokeeper_proto_rawDescData []byte
+	file_api_proto_gokeeper_proto_rawDescOnce sync.Once
+	file_api_proto_gokeeper_proto_rawDescData []byte
 )
 
-func file_gokeeper_proto_rawDescGZIP() []byte {
-	file_gokeeper_proto_rawDescOnce.Do(func() {
-		file_gokeeper_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_gokeeper_proto_rawDesc), len(file_gokeeper_proto_rawDesc)))
+func file_api_proto_gokeeper_proto_rawDescGZIP() []byte {
+	file_api_proto_gokeeper_proto_rawDescOnce.Do(func() {
+		file_api_proto_gokeeper_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_proto_gokeeper_proto_rawDesc), len(file_api_proto_gokeeper_proto_rawDesc)))
 	})
-	return file_gokeeper_proto_rawDescData
+	return file_api_proto_gokeeper_proto_rawDescData
 }
 
-var file_gokeeper_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_gokeeper_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_gokeeper_proto_goTypes = []any{
-	(UserData_Type)(0),      // 0: grpcgokeeper.UserData.Type
-	(DataChunk_Type)(0),     // 1: grpcgokeeper.DataChunk.Type
-	(*LoginRequest)(nil),    // 2: grpcgokeeper.LoginRequest
-	(*LoginResponse)(nil),   // 3: grpcgokeeper.LoginResponse
-	(*UserData)(nil),        // 4: grpcgokeeper.UserData
-	(*ResponseAddData)(nil), // 5: grpcgokeeper.ResponseAddData
+var file_api_proto_gokeeper_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_api_proto_gokeeper_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_api_proto_gokeeper_proto_goTypes = []any{
+	(TypeData)(0),           // 0: grpcgokeeper.TypeData
+	(*LoginRequest)(nil),    // 1: grpcgokeeper.LoginRequest
+	(*LoginResponse)(nil),   // 2: grpcgokeeper.LoginResponse
+	(*UserData)(nil),        // 3: grpcgokeeper.UserData
+	(*ResponseAddData)(nil), // 4: grpcgokeeper.ResponseAddData
+	(*ListRequest)(nil),     // 5: grpcgokeeper.ListRequest
 	(*DownloadRequest)(nil), // 6: grpcgokeeper.DownloadRequest
 	(*DataChunk)(nil),       // 7: grpcgokeeper.DataChunk
 }
-var file_gokeeper_proto_depIdxs = []int32{
-	0, // 0: grpcgokeeper.UserData.type:type_name -> grpcgokeeper.UserData.Type
-	1, // 1: grpcgokeeper.DataChunk.type:type_name -> grpcgokeeper.DataChunk.Type
-	2, // 2: grpcgokeeper.KeeperService.LoginUser:input_type -> grpcgokeeper.LoginRequest
-	2, // 3: grpcgokeeper.KeeperService.RegisterUser:input_type -> grpcgokeeper.LoginRequest
-	4, // 4: grpcgokeeper.KeeperService.AddData:input_type -> grpcgokeeper.UserData
+var file_api_proto_gokeeper_proto_depIdxs = []int32{
+	0, // 0: grpcgokeeper.UserData.type:type_name -> grpcgokeeper.TypeData
+	0, // 1: grpcgokeeper.DataChunk.type:type_name -> grpcgokeeper.TypeData
+	1, // 2: grpcgokeeper.KeeperService.LoginUser:input_type -> grpcgokeeper.LoginRequest
+	1, // 3: grpcgokeeper.KeeperService.RegisterUser:input_type -> grpcgokeeper.LoginRequest
+	3, // 4: grpcgokeeper.KeeperService.AddData:input_type -> grpcgokeeper.UserData
 	6, // 5: grpcgokeeper.KeeperService.GetData:input_type -> grpcgokeeper.DownloadRequest
 	7, // 6: grpcgokeeper.KeeperService.UploadData:input_type -> grpcgokeeper.DataChunk
 	6, // 7: grpcgokeeper.KeeperService.DownloadData:input_type -> grpcgokeeper.DownloadRequest
-	3, // 8: grpcgokeeper.KeeperService.LoginUser:output_type -> grpcgokeeper.LoginResponse
-	3, // 9: grpcgokeeper.KeeperService.RegisterUser:output_type -> grpcgokeeper.LoginResponse
-	5, // 10: grpcgokeeper.KeeperService.AddData:output_type -> grpcgokeeper.ResponseAddData
-	4, // 11: grpcgokeeper.KeeperService.GetData:output_type -> grpcgokeeper.UserData
-	5, // 12: grpcgokeeper.KeeperService.UploadData:output_type -> grpcgokeeper.ResponseAddData
-	7, // 13: grpcgokeeper.KeeperService.DownloadData:output_type -> grpcgokeeper.DataChunk
-	8, // [8:14] is the sub-list for method output_type
-	2, // [2:8] is the sub-list for method input_type
+	5, // 8: grpcgokeeper.KeeperService.GetList:input_type -> grpcgokeeper.ListRequest
+	2, // 9: grpcgokeeper.KeeperService.LoginUser:output_type -> grpcgokeeper.LoginResponse
+	2, // 10: grpcgokeeper.KeeperService.RegisterUser:output_type -> grpcgokeeper.LoginResponse
+	4, // 11: grpcgokeeper.KeeperService.AddData:output_type -> grpcgokeeper.ResponseAddData
+	3, // 12: grpcgokeeper.KeeperService.GetData:output_type -> grpcgokeeper.UserData
+	4, // 13: grpcgokeeper.KeeperService.UploadData:output_type -> grpcgokeeper.ResponseAddData
+	7, // 14: grpcgokeeper.KeeperService.DownloadData:output_type -> grpcgokeeper.DataChunk
+	3, // 15: grpcgokeeper.KeeperService.GetList:output_type -> grpcgokeeper.UserData
+	9, // [9:16] is the sub-list for method output_type
+	2, // [2:9] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_gokeeper_proto_init() }
-func file_gokeeper_proto_init() {
-	if File_gokeeper_proto != nil {
+func init() { file_api_proto_gokeeper_proto_init() }
+func file_api_proto_gokeeper_proto_init() {
+	if File_api_proto_gokeeper_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gokeeper_proto_rawDesc), len(file_gokeeper_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   6,
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_gokeeper_proto_rawDesc), len(file_api_proto_gokeeper_proto_rawDesc)),
+			NumEnums:      1,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_gokeeper_proto_goTypes,
-		DependencyIndexes: file_gokeeper_proto_depIdxs,
-		EnumInfos:         file_gokeeper_proto_enumTypes,
-		MessageInfos:      file_gokeeper_proto_msgTypes,
+		GoTypes:           file_api_proto_gokeeper_proto_goTypes,
+		DependencyIndexes: file_api_proto_gokeeper_proto_depIdxs,
+		EnumInfos:         file_api_proto_gokeeper_proto_enumTypes,
+		MessageInfos:      file_api_proto_gokeeper_proto_msgTypes,
 	}.Build()
-	File_gokeeper_proto = out.File
-	file_gokeeper_proto_goTypes = nil
-	file_gokeeper_proto_depIdxs = nil
+	File_api_proto_gokeeper_proto = out.File
+	file_api_proto_gokeeper_proto_goTypes = nil
+	file_api_proto_gokeeper_proto_depIdxs = nil
 }

@@ -3,14 +3,14 @@ package service
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 
 	"github.com/4aleksei/gokeeper/internal/common/store"
-	"github.com/4aleksei/gokeeper/internal/common/utils"
+	"github.com/4aleksei/gokeeper/internal/common/utils/random"
 	"github.com/4aleksei/gokeeper/internal/server/config"
 	"github.com/4aleksei/gokeeper/internal/server/jwtauth"
 	"go.uber.org/zap"
-	// "github.com/4aleksei/gokeeper/internal/common/datacrypto"
 )
 
 type (
@@ -51,20 +51,19 @@ func New(s serverStorage, enc serverEncoder, l *zap.Logger, c *config.Config) *H
 
 func (serv *HandlerService) LoginUser(ctx context.Context, user string, password string) (*store.User, error) {
 	passValue, err := serv.store.GetUser(ctx, user)
-	pass := utils.HashPass([]byte(password), serv.cfg.Key)
 	if err != nil {
 		return nil, err
 	}
-	if passValue.HashPass == string(pass) {
+	pass := random.HashPass([]byte(password), serv.cfg.Key)
+	if passValue.HashPass == hex.EncodeToString(pass) {
 		return passValue, nil
 	}
 	return nil, ErrPassIncorect
 }
 
 func (serv *HandlerService) RegisterUser(ctx context.Context, user string, password string) (*store.User, error) {
-	pass := utils.HashPass([]byte(password), serv.cfg.Key)
-
-	value, err := serv.store.AddUser(ctx, user, string(pass))
+	pass := random.HashPass([]byte(password), serv.cfg.Key)
+	value, err := serv.store.AddUser(ctx, user, hex.EncodeToString(pass))
 	if err != nil {
 		return nil, err
 	}
@@ -79,13 +78,7 @@ func (serv *HandlerService) CheckToken(ctx context.Context, token string) (uint6
 	return serv.auth.GetUserID(token)
 }
 
-func (serv *HandlerService) AddData(ctx context.Context, userId uint64, typeData int, data string, metadata string) (string, error) {
-	dataUser := &store.UserData{
-		Id:       userId,
-		TypeData: typeData,
-		UserData: data,
-		MetaData: metadata,
-	}
+func (serv *HandlerService) AddData(ctx context.Context, dataUser *store.UserData) (string, error) {
 	encDataUser, err := serv.encoder.Encrypt(dataUser)
 	if err != nil {
 		return "", err

@@ -1,18 +1,27 @@
 package main
 
 import (
-	"github.com/pterm/pterm"
+	"fmt"
+	"log"
+
+	"github.com/4aleksei/gokeeper/internal/client/app"
 )
 
+var (
+	buildVersion string = "N/A"
+	buildDate    string = "N/A"
+	buildCommit  string = "N/A"
+)
+
+func printVersion() {
+	fmt.Println("Build version: ", buildVersion)
+	fmt.Println("Build date: ", buildDate)
+	fmt.Println("Build commit: ", buildCommit)
+}
+
 func main() {
-	// Create an interactive text input with single line input mode and show it
-	pterm.Printf("Login command %d\n", 33)
-
-	result, _ := pterm.DefaultInteractiveTextInput.Show()
-
-	// Print a blank line for better readability
-	pterm.Println()
-
-	// Print the user's answer with an info prefix
-	pterm.Info.Printfln("You answered: %s", result)
+	printVersion()
+	if err := app.Run(); err != nil {
+		log.Fatal(err)
+	}
 }

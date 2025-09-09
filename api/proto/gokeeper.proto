@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package grpcgokeeper;
 
-option go_package = "github.com/4aleksei/gokeeper/pkg/proto";
+option go_package = "github.com/4aleksei/gokeeper/pkg/api/proto";
   
-  enum Type {
+  enum TypeData {
       LOGINDATA = 0;
       CARDDATA = 1;
       TEXTDATA = 2;
@@ -21,7 +21,7 @@ message LoginResponse {
 }
 
 message UserData  {
-  Type type = 1;      // тип данных
+  TypeData type = 1;      // тип данных
   string data = 2;
   string metadata = 3;
 }
@@ -31,6 +31,11 @@ message ResponseAddData  {
   string uuid = 1;
 }
 
+message ListRequest {
+  
+}
+
+
 message DownloadRequest {
   string uuid = 1;
 }
@@ -39,19 +44,9 @@ message DataChunk {
   bytes data = 1; // The actual byte data for the chunk
   int64 offset = 2; // Optional: for tracking progress/resuming
   string metadata = 3; //Optional
-  Type type = 4;      // тип данных
+  TypeData type = 4;      // тип данных
   int64 size = 5;
 }
-
-/*
-message PaymentCard {
-  string card_number = 1;
-  string expiry_month = 2;
-  string expiry_year = 3;
-  string cvv = 4;
-  string cardholder_name = 5;
-}
-*/
 
 
 service KeeperService {
@@ -65,10 +60,6 @@ service KeeperService {
   rpc UploadData(stream DataChunk) returns (ResponseAddData);
   rpc DownloadData (DownloadRequest) returns (stream DataChunk);
 
-  //rpc GetList() returns (stream UserData);
+  rpc GetList(ListRequest) returns (stream UserData);
 
-//rpc UpdateRequest (Request) returns ( Response);
-//rpc MultiUpdateRequest ( MultiUpdate ) returns (MultiResponse); 
-//rpc GetMetric (Request) returns (Response);
-//rpc GetMetrics (RequestMetrics) returns (stream Metric);
 }

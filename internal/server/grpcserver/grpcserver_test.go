@@ -14,7 +14,7 @@ import (
 	"github.com/4aleksei/gokeeper/internal/common/store/cache"
 	"github.com/4aleksei/gokeeper/internal/server/config"
 	"github.com/4aleksei/gokeeper/internal/server/service"
-	pb "github.com/4aleksei/gokeeper/pkg/proto"
+	pb "github.com/4aleksei/gokeeper/pkg/api/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -190,7 +190,7 @@ func TestInsertData(t *testing.T) {
 			var err error
 			switch tt.oper {
 			case "AddData":
-				val, err = client.AddData(ctxReq, &pb.UserData{Type: pb.UserData_Type(tt.data.typeData), Data: tt.data.data, Metadata: tt.data.metadata})
+				val, err = client.AddData(ctxReq, &pb.UserData{Type: pb.TypeData(tt.data.typeData), Data: tt.data.data, Metadata: tt.data.metadata})
 
 			default:
 				log.Fatal("error operation")

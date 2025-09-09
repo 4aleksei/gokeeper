@@ -88,6 +88,7 @@ func (s *Store) AddUser(ctx context.Context, user string, pass string) (*store.U
 		HashPass: pass,
 		Id:       getId(),
 	}
+	s.l.Debug("Add user", zap.String("Name", user))
 	_, ok := s.users.LoadOrStore(user, userSt)
 	if ok {
 		return nil, ErrUserExists
@@ -97,6 +98,7 @@ func (s *Store) AddUser(ctx context.Context, user string, pass string) (*store.U
 
 func (s *Store) GetUser(ctx context.Context, user string) (*store.User, error) {
 	val, ok := s.users.Load(user)
+	s.l.Debug("Get user", zap.String("Name", user), zap.Bool("GETED", ok))
 	if ok {
 		return val.(*store.User), nil
 	}

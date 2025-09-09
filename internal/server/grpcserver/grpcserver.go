@@ -6,39 +6,22 @@ import (
 	"fmt"
 	"net"
 
-	/*
-		"crypto/tls"
-
-			"net/netip"
-
-		"google.golang.org/grpc/credentials"*/
 	"github.com/4aleksei/gokeeper/internal/common/logger"
+	"github.com/4aleksei/gokeeper/internal/common/store"
 	"github.com/4aleksei/gokeeper/internal/server/config"
 	"github.com/4aleksei/gokeeper/internal/server/service"
-	pb "github.com/4aleksei/gokeeper/pkg/proto"
+	pb "github.com/4aleksei/gokeeper/pkg/api/proto"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	/*"github.com/4aleksei/metricscum/internal/common/models"
-	"github.com/4aleksei/metricscum/internal/common/repository/valuemetric"
-	"github.com/4aleksei/metricscum/internal/common/utils"
-	"github.com/4aleksei/metricscum/internal/server/config"
-	"github.com/4aleksei/metricscum/internal/server/service"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"*//*
-
-		"google.golang.org/grpc/codes"
-		_ "google.golang.org/grpc/encoding/gzip"
-		"google.golang.org/grpc/metadata"
-		"google.golang.org/grpc/peer"
-		"google.golang.org/grpc/status"*/)
+)
 
 type (
 	KeeperServiceService struct {
 		pb.UnimplementedKeeperServiceServer
-		//store *service.HandlerStore
 		srv  *grpc.Server
 		l    *logger.ZapLogger
 		serv *service.HandlerService
@@ -71,6 +54,7 @@ func (s KeeperServiceService) RegisterUser(ctx context.Context, in *pb.LoginRequ
 
 	name := in.GetName()
 	pass := in.GetPassword()
+	s.l.Logger.Debug("Get name", zap.String("name", name))
 	user, err := s.serv.RegisterUser(ctx, name, pass)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, `%s`, err.Error())
@@ -91,7 +75,13 @@ func (s KeeperServiceService) AddData(ctx context.Context, in *pb.UserData) (*pb
 		return nil, status.Errorf(codes.Internal, `%s`, "no USERID")
 	}
 
-	uuid, err := s.serv.AddData(ctx, userID, int(in.GetType()), in.GetData(), in.GetMetadata())
+	data := &store.UserData{
+		Id: userID, TypeData: int(in.GetType()),
+		UserData: in.GetData(),
+		MetaData: in.GetMetadata(),
+	}
+
+	uuid, err := s.serv.AddData(ctx, data)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, `%s`, err.Error())
 	}
@@ -112,7 +102,7 @@ func (s KeeperServiceService) GetData(ctx context.Context, in *pb.DownloadReques
 	}
 	response.Data = data.UserData
 	response.Metadata = data.MetaData
-	response.Type = pb.UserData_Type(data.TypeData)
+	response.Type = pb.TypeData(data.TypeData)
 	return &response, nil
 }
 
