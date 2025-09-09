@@ -30,6 +30,9 @@ type (
 	authInterceptor struct {
 		serv *service.HandlerService
 	}
+
+	userIdValue struct {
+	}
 )
 
 func (s KeeperServiceService) LoginUser(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
@@ -70,7 +73,7 @@ func (s KeeperServiceService) RegisterUser(ctx context.Context, in *pb.LoginRequ
 
 func (s KeeperServiceService) AddData(ctx context.Context, in *pb.UserData) (*pb.ResponseAddData, error) {
 	var response pb.ResponseAddData
-	userID, ok := ctx.Value("user_id").(uint64)
+	userID, ok := ctx.Value(userIdValue{}).(uint64)
 	if !ok {
 		return nil, status.Errorf(codes.Internal, `%s`, "no USERID")
 	}
@@ -91,7 +94,7 @@ func (s KeeperServiceService) AddData(ctx context.Context, in *pb.UserData) (*pb
 
 func (s KeeperServiceService) GetData(ctx context.Context, in *pb.DownloadRequest) (*pb.UserData, error) {
 	var response pb.UserData
-	userID, ok := ctx.Value("user_id").(uint64)
+	userID, ok := ctx.Value(userIdValue{}).(uint64)
 	if !ok {
 		return nil, status.Errorf(codes.Internal, `%s`, "no USERID")
 	}
@@ -225,7 +228,7 @@ func (a *authInterceptor) UnaryAuthMiddleware(ctx context.Context, req any, info
 		return nil, status.Error(codes.Unauthenticated, "invalid token")
 	}
 	// add our user ID to the context, so we can use it in our RPC handler
-	ctx = context.WithValue(ctx, "user_id", userID)
+	ctx = context.WithValue(ctx, userIdValue{}, userID)
 
 	// call our handler
 	return handler(ctx, req)
