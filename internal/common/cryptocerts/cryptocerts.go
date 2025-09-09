@@ -38,23 +38,3 @@ func GenerateKey() (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	}
 	return privateKey, &privateKey.PublicKey, nil
 }
-
-/*func LoadPublicKey(name string) (*rsa.PublicKey, error) {
-	publicKeyPEM, err := os.ReadFile(name)
-	if err != nil {
-		return nil, err
-	}
-	block, _ := pem.Decode(publicKeyPEM)
-	if block == nil || block.Type != "PUBLIC KEY" {
-		return nil, ErrNoPublic
-	}
-	publicKeyLoaded, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return nil, err
-	}
-	rsaPublicKeyLoaded, ok := publicKeyLoaded.(*rsa.PublicKey)
-	if !ok {
-		return nil, ErrNoRSA
-	}
-	return rsaPublicKeyLoaded, nil
-}*/

@@ -27,8 +27,6 @@ type (
 	handleResources struct {
 		Store resoucesStorage
 		Enc   resourceEncoder
-		//DB    store.Store
-		//FILE  *repository.MemStorageMuxLongTerm
 	}
 )
 

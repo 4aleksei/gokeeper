@@ -26,14 +26,6 @@ func Run() error {
 		return err
 	}
 
-	/*if cfg.DBcfg.DatabaseDSN != "" {
-		errM := migrate.Migrate(l, cfg.DBcfg.DatabaseDSN, "up")
-		if errM != nil {
-			l.Error("Error goose UP migration:", zap.Error(errM))
-			return errM
-		}
-	}*/
-
 	storageRes, errC := resources.New(cfg, l)
 	if errC != nil {
 		l.Logger.Error("Error create resources :", zap.Error(errC))

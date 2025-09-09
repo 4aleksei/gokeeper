@@ -129,11 +129,9 @@ func New(s *service.HandlerService, l *logger.ZapLogger, c *config.Config) (*Kee
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		logging.UnaryServerInterceptor(InterceptorLogger(l.Logger), opts...),
 		grpc.UnaryServerInterceptor(interceptor.UnaryAuthMiddleware),
-		//UnaryServerBlock(optsMy...),
 	),
 		grpc.ChainStreamInterceptor(
 			logging.StreamServerInterceptor(InterceptorLogger(l.Logger), opts...),
-			//StreamServerBlock(optsMy...),
 		),
 	)
 

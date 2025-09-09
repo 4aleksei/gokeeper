@@ -110,7 +110,7 @@ func TestServerSingle(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				//resp.getValue(val.Value)
+
 				id, errCh := st.CheckToken(context.Background(), val.GetToken())
 				require.NoError(t, errCh)
 
@@ -133,13 +133,8 @@ func TestInsertData(t *testing.T) {
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 
 		grpc.UnaryServerInterceptor(interceptor.UnaryAuthMiddleware),
-		//UnaryServerBlock(optsMy...),
 	),
-		grpc.ChainStreamInterceptor(
-
-		//StreamServerBlock(optsMy...),
-		))
-	//cfg, _ := config.New()
+		grpc.ChainStreamInterceptor())
 
 	pb.RegisterKeeperServiceServer(grpcServer, KeeperServiceService{serv: st,
 		srv: grpcServer,
@@ -151,7 +146,7 @@ func TestInsertData(t *testing.T) {
 			log.Fatal(err)
 		}
 	}()
-	defer grpcServer.Stop() // Ensure server is stopped after test
+	defer grpcServer.Stop()
 
 	conn, err := grpc.NewClient("passthrough:///bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -221,10 +216,7 @@ func TestInsertData(t *testing.T) {
 					metadata: valData.GetMetadata(),
 				}
 				assert.Equal(t, tt.data, resp)
-				//resp.getValue(val.Value)
-				//id, errCh := st.CheckToken(context.Background(), val.GetToken())
-				//require.NoError(t, errCh)
-				//assert.Equal(t, tt.wantId, id)
+
 			}
 		})
 	}

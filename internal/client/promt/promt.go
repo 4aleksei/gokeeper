@@ -12,9 +12,6 @@ import (
 )
 
 type (
-	//PromptRespond interface {
-	//}
-
 	PromptCommand interface {
 		String() string
 		PrintHelp() string
@@ -33,18 +30,7 @@ func AddCommand(comm *commands.Command) func(*Promt) {
 	return func(p *Promt) {
 
 		p.commands[comm.String()] = comm
-		/*
-			pterm.Printf("Login command %d\n", 33)
 
-			pterm.DefaultBox.Println("Hello, World!", "Доступные команды:", "Login Username Pass", "Register UserName Pass")
-
-
-			// Print a blank line for better readability
-			pterm.Println()
-
-			// Print the user's answer with an info prefix
-			pterm.Info.Printfln("You answered: %s", result)
-		*/
 	}
 }
 
