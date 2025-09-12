@@ -3,6 +3,8 @@ package service
 
 import (
 	"context"
+	"io"
+	"os"
 
 	"github.com/4aleksei/gokeeper/internal/client/grpcclient"
 	"github.com/4aleksei/gokeeper/internal/client/transaction"
@@ -80,4 +82,53 @@ func (s *HandleService) GetData(ctx context.Context, token string, uuid string) 
 		return nil, transaction.ErrBadTypeResponse
 	}
 	return &str, nil
+}
+
+func openReadFile(filename string) (chan []byte, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	ch := make(chan []byte)
+	var errR error
+	go func() {
+		buffer := make([]byte, 4096)
+
+		for {
+			var n int
+			n, errR = file.Read(buffer)
+			if errR == io.EOF {
+				break
+			}
+			if errR != nil {
+				break
+			}
+			ch <- buffer[:n]
+		}
+
+	}()
+
+	return ch, nil
+}
+
+func (s *HandleService) UploadData(ctx context.Context, token string, typdata int, metadata string, filename string) (string, error) {
+
+	ch, err := openReadFile(filename)
+	if err != nil {
+		return "", err
+	}
+	req := &transaction.Request{
+		Command: transaction.StreamData{Token: transaction.TokenUser{Token: token}, TypeData: typdata, MetaData: metadata, Output: ch},
+	}
+
+	resp, err := s.client.SendStreamCommand(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	str, ok := resp.Resp.(transaction.UUIDData)
+	if !ok {
+		return "", transaction.ErrBadTypeResponse
+	}
+	return str.UUID, nil
 }

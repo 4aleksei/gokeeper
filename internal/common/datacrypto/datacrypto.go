@@ -22,10 +22,10 @@ func New(privKey *rsa.PrivateKey, pubKey *rsa.PublicKey) *DataCryptDecrypt {
 	}
 }
 
-func (d *DataCryptDecrypt) Encrypt(data *store.UserData) (*store.UserDataCrypt, error) {
+func (d *DataCryptDecrypt) Encrypt(data *store.UserData) (*store.UserDataCrypt, *aescoder.KeyAES, error) {
 	key, err := aescoder.NewAES(d.pubKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	dataEnc := &store.UserDataCrypt{
@@ -38,28 +38,28 @@ func (d *DataCryptDecrypt) Encrypt(data *store.UserData) (*store.UserDataCrypt, 
 	var wData bytes.Buffer
 	wrD, err := aescoder.NewWriter(&wData, key)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	wrD.Write([]byte(data.UserData))
 
 	var wMe bytes.Buffer
 	wrMe, err := aescoder.NewWriter(&wMe, key)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	wrMe.Write([]byte(data.MetaData))
 	dataEnc.UserDataEn = make([]byte, wData.Len())
 	dataEnc.MetaDataEn = make([]byte, wMe.Len())
 	copy(dataEnc.UserDataEn, wData.Bytes())
 	copy(dataEnc.MetaDataEn, wMe.Bytes())
-	return dataEnc, nil
+	return dataEnc, key, nil
 }
 
-func (d *DataCryptDecrypt) Decrypt(dataEnc *store.UserDataCrypt) (*store.UserData, error) {
+func (d *DataCryptDecrypt) Decrypt(dataEnc *store.UserDataCrypt) (*store.UserData, *aescoder.KeyAES, error) {
 
 	key, err := aescoder.DecodeAESKey(d.privKey, dataEnc.EnKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	data := &store.UserData{
 		Id:       dataEnc.Id,
@@ -71,12 +71,12 @@ func (d *DataCryptDecrypt) Decrypt(dataEnc *store.UserDataCrypt) (*store.UserDat
 
 	rD, err := aescoder.NewReader(io.NopCloser(r), key)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	np, err := rD.ReadOne(dataEnc.UserDataEn)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	data.UserData = string(np)
@@ -84,14 +84,14 @@ func (d *DataCryptDecrypt) Decrypt(dataEnc *store.UserDataCrypt) (*store.UserDat
 	rM := bytes.NewReader(dataEnc.MetaDataEn)
 	rMeta, err := aescoder.NewReader(io.NopCloser(rM), key)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	npMeta, err := rMeta.ReadOne(dataEnc.MetaDataEn)
-	//bufM, err := io.ReadAll(rMeta)
+
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	data.MetaData = string(npMeta)
-	return data, nil
+	return data, key, nil
 }

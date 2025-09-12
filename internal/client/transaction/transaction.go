@@ -43,6 +43,13 @@ type (
 		MetaData string
 	}
 
+	StreamData struct {
+		Token    TokenUser
+		TypeData int
+		MetaData string
+		Output   chan []byte
+	}
+
 	Request struct {
 		Command any
 	}

@@ -3,6 +3,7 @@ package grpcserver
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"testing"
@@ -12,7 +13,9 @@ import (
 	"github.com/4aleksei/gokeeper/internal/common/logger"
 	"github.com/4aleksei/gokeeper/internal/common/store"
 	"github.com/4aleksei/gokeeper/internal/common/store/cache"
+	"github.com/4aleksei/gokeeper/internal/common/utils/random"
 	"github.com/4aleksei/gokeeper/internal/server/config"
+	"github.com/4aleksei/gokeeper/internal/server/grpcserver/interceptor"
 	"github.com/4aleksei/gokeeper/internal/server/service"
 	pb "github.com/4aleksei/gokeeper/pkg/api/proto"
 	"github.com/stretchr/testify/assert"
@@ -129,7 +132,7 @@ func TestInsertData(t *testing.T) {
 
 	st := service.New(cache.New(l.Logger), crypto, l.Logger, cfg)
 
-	interceptor := NewAuthInterceptor(st)
+	interceptor := interceptor.NewAuthInterceptor(st)
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 
 		grpc.UnaryServerInterceptor(interceptor.UnaryAuthMiddleware),
@@ -214,6 +217,144 @@ func TestInsertData(t *testing.T) {
 					typeData: int(valData.GetType()),
 					data:     valData.GetData(),
 					metadata: valData.GetMetadata(),
+				}
+				assert.Equal(t, tt.data, resp)
+
+			}
+		})
+	}
+
+}
+
+func TestInsertStreamData(t *testing.T) {
+	initNew()
+	l, _ := logger.New(logger.Config{Level: "debug"})
+	cfg := &config.Config{Key: "Secret"}
+	pr, pub, _ := cryptocerts.GenerateKey()
+	crypto := datacrypto.New(pr, pub)
+
+	st := service.New(cache.New(l.Logger), crypto, l.Logger, cfg)
+
+	interceptor := interceptor.NewAuthInterceptor(st)
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
+
+		grpc.UnaryServerInterceptor(interceptor.UnaryAuthMiddleware),
+	),
+		grpc.ChainStreamInterceptor(
+
+			grpc.StreamServerInterceptor(interceptor.StreamAuthMiddleware),
+		))
+
+	pb.RegisterKeeperServiceServer(grpcServer, KeeperServiceService{serv: st,
+		srv: grpcServer,
+		l:   l,
+	})
+
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	defer grpcServer.Stop()
+
+	conn, err := grpc.NewClient("passthrough:///bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+	var login *pb.LoginResponse
+	client := pb.NewKeeperServiceClient(conn)
+
+	login, err = client.RegisterUser(context.Background(), &pb.LoginRequest{Name: "user1", Password: "abcd"})
+	require.NoError(t, err)
+
+	type dataST struct {
+		typeData   int
+		dataStream []byte
+		metadata   string
+	}
+	file, err := random.GenerateRandom(2048)
+	require.NoError(t, err)
+	dataTest1 := dataST{typeData: 2, dataStream: file, metadata: "meta_file"}
+
+	tests := []struct {
+		name    string
+		oper    string
+		data    dataST
+		errcode codes.Code
+	}{
+		{name: "Test N1 UploadData Stream", oper: "UploadData", data: dataTest1},
+	}
+
+	md := metadata.New(map[string]string{"authorization": login.GetToken()})
+	ctxReq := metadata.NewOutgoingContext(context.Background(), md)
+	//
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var val *pb.ResponseAddData
+
+			var errC error
+			switch tt.oper {
+			case "UploadData":
+
+				stream, err := client.UploadData(ctxReq)
+				require.NoError(t, err)
+
+				//for {
+
+				req := &pb.DataChunk{Type: pb.TypeData(tt.data.typeData), Data: tt.data.dataStream, Metadata: tt.data.metadata}
+
+				err = stream.Send(req)
+
+				require.NoError(t, err)
+				//	time.Sleep(10 * time.Millisecond) // Simulate network delay
+				//}
+
+				val, errC = stream.CloseAndRecv()
+
+			default:
+				log.Fatal("error operation")
+			}
+
+			if errC != nil {
+				if e, ok := status.FromError(err); ok {
+					switch e.Code() {
+					case codes.NotFound, codes.DeadlineExceeded:
+						log.Println(e.Message())
+					default:
+						log.Println(e.Code(), e.Message())
+					}
+					assert.Equal(t, tt.errcode, e.Code())
+				} else {
+					log.Printf("не получилось распарсить ошибку %v", err)
+					require.NoError(t, err)
+				}
+			} else {
+				require.NoError(t, err)
+				fmt.Println(val.GetUuid())
+
+				/*		valData, err := client.GetData(ctxReq, &pb.DownloadRequest{Uuid: val.GetUuid()})
+						require.NoError(t, err)
+
+				*/
+				stream, err := client.DownloadData(ctxReq, &pb.DownloadRequest{Uuid: val.GetUuid()})
+				require.NoError(t, err)
+
+				var resp dataST
+				var firstP bool
+				for {
+					chunk, err := stream.Recv()
+					if err == io.EOF {
+						break // End of stream
+					}
+					require.NoError(t, err)
+
+					resp.dataStream = append(resp.dataStream, chunk.GetData()...)
+					if !firstP {
+						resp.metadata = chunk.Metadata
+						resp.typeData = int(chunk.GetType())
+						firstP = true
+					}
 				}
 				assert.Equal(t, tt.data, resp)
 

@@ -96,6 +96,56 @@ func (c *KeeperServiceService) SendSingleCommand(ctx context.Context, req *trans
 	return resp, nil
 }
 
+func (c *KeeperServiceService) SendStreamCommand(ctx context.Context, req *transaction.Request) (*transaction.Response, error) {
+	resp, err := sendStream(ctx, c.client, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func sendStream(ctx context.Context, client *agentClient, req *transaction.Request) (*transaction.Response, error) {
+	md := metadata.New(map[string]string{"X-Real-IP": client.localAddr})
+	ctxReq := metadata.NewOutgoingContext(ctx, md)
+
+	switch v := req.Command.(type) {
+	case transaction.StreamData:
+
+		stream, err := client.client.UploadData(ctxReq)
+		if err != nil {
+			return nil, err
+		}
+		var fsend bool
+		for res := range v.Output {
+			select {
+			case <-ctxReq.Done():
+				return nil, ctxReq.Err()
+
+			default:
+
+				if !fsend {
+					err = stream.Send(&pb.DataChunk{Data: res, Type: pb.TypeData(v.TypeData), Metadata: v.MetaData})
+					fsend = true
+				} else {
+					err = stream.Send(&pb.DataChunk{Data: res})
+				}
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		resp, err := stream.CloseAndRecv()
+		if err != nil {
+			return nil, err
+		}
+
+		return &transaction.Response{Resp: transaction.UUIDData{UUID: resp.GetUuid()}}, nil
+	}
+
+	return nil, transaction.ErrBadTypeCommand
+}
+
 func sendTransaction(ctx context.Context, client *agentClient, req *transaction.Request) (*transaction.Response, error) {
 
 	md := metadata.New(map[string]string{"X-Real-IP": client.localAddr})

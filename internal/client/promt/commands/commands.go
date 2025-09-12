@@ -1,42 +1,117 @@
-// Package commands
+// Package commands - commands realization
 package commands
 
 import (
 	"context"
+	"errors"
 
 	"github.com/4aleksei/gokeeper/internal/client/promt/responses"
+	"github.com/4aleksei/gokeeper/internal/client/service"
+	"github.com/4aleksei/gokeeper/internal/common/store"
 )
 
-type (
-	CommandRespond interface {
-		GetToken() (string, bool)
-	}
-
-	Command struct {
-		name     string
-		help     string
-		execFunc func(context.Context, ...string) *responses.Respond
-	}
+var (
+	ErrParamsNotEnough = errors.New("error parameters not enough")
 )
 
-func New(name string, help string, f func(context.Context, ...string) *responses.Respond) *Command {
-	return &Command{
-		name:     name,
-		help:     help,
-		execFunc: f,
+func CommandLogin(ctx context.Context, srv *service.HandleService, s ...string) *responses.Respond {
+	if len(s) < 3 {
+		return responses.New(
+			responses.AddError(ErrParamsNotEnough),
+		)
 	}
+
+	token, err := srv.SendLogin(ctx, s[1], s[2])
+	if err != nil {
+		return responses.New(
+			responses.AddError(err),
+		)
+	}
+	return responses.New(
+		responses.AddUserName(s[1]),
+		responses.AddToken(token),
+	)
 }
 
-func (c *Command) String() string {
-	return c.name
+func CommandRegister(ctx context.Context, srv *service.HandleService, s ...string) *responses.Respond {
+	if len(s) < 3 {
+		return responses.New(
+			responses.AddError(ErrParamsNotEnough),
+		)
+	}
+	token, err := srv.SendRegister(ctx, s[1], s[2])
+	if err != nil {
+		return responses.New(
+			responses.AddError(err),
+		)
+	}
+	return responses.New(
+		responses.AddUserName(s[1]),
+		responses.AddToken(token),
+	)
 }
 
-func (c *Command) PrintHelp() string {
-	return c.help
-}
-func (c *Command) Exec(ctx context.Context, s ...string) *responses.Respond {
-	if c.execFunc != nil {
-		return c.execFunc(ctx, s...)
+func CommandData(ctx context.Context, srv *service.HandleService, s ...string) *responses.Respond {
+	if len(s) < 4 {
+		return responses.New(
+			responses.AddError(ErrParamsNotEnough),
+		)
 	}
-	return nil
+	t, err := store.GetType(s[1])
+	if err != nil {
+		return responses.New(
+			responses.AddError(err),
+		)
+	}
+
+	uuid, err := srv.SendData(ctx, s[0], t, s[2], s[3])
+	if err != nil {
+		return responses.New(
+			responses.AddError(err),
+		)
+	}
+	return responses.New(
+		responses.AddUUID(uuid),
+	)
+}
+
+func CommandGetData(ctx context.Context, srv *service.HandleService, s ...string) *responses.Respond {
+	if len(s) < 2 {
+		return responses.New(
+			responses.AddError(ErrParamsNotEnough),
+		)
+	}
+	data, err := srv.GetData(ctx, s[0], s[1])
+	if err != nil {
+		return responses.New(
+			responses.AddError(err),
+		)
+	}
+	return responses.New(
+		responses.AddData(data.TypeData, data.Data, data.MetaData),
+	)
+}
+
+func CommandUploadData(ctx context.Context, srv *service.HandleService, s ...string) *responses.Respond {
+	if len(s) < 4 {
+		return responses.New(
+			responses.AddError(ErrParamsNotEnough),
+		)
+	}
+	t, err := store.GetType(s[1])
+	if err != nil {
+		return responses.New(
+			responses.AddError(err),
+		)
+	}
+
+	uuid, err := srv.UploadData(ctx, s[0], t, s[2], s[3])
+	if err != nil {
+		return responses.New(
+			responses.AddError(err),
+		)
+	}
+	return responses.New(
+		responses.AddUUID(uuid),
+	)
 }

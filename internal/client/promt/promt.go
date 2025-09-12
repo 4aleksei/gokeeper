@@ -5,8 +5,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/4aleksei/gokeeper/internal/client/promt/commands"
+	"github.com/4aleksei/gokeeper/internal/client/promt/command"
 	"github.com/4aleksei/gokeeper/internal/client/promt/responses"
+	"github.com/4aleksei/gokeeper/internal/client/service"
 	"github.com/4aleksei/gokeeper/internal/common/store"
 	"github.com/pterm/pterm"
 )
@@ -25,7 +26,7 @@ type (
 	}
 )
 
-func AddCommand(comm *commands.Command) func(*Promt) {
+func AddCommand(comm *command.Command) func(*Promt) {
 
 	return func(p *Promt) {
 
@@ -38,7 +39,7 @@ func New(options ...func(*Promt)) *Promt {
 	prm := &Promt{
 		commands: make(map[string]PromptCommand),
 	}
-	options = append(options, AddCommand(commands.New("Help", "list all commands", func(context.Context, ...string) *responses.Respond {
+	options = append(options, AddCommand(command.New(nil, "Help", "list all commands", func(context.Context, *service.HandleService, ...string) *responses.Respond {
 		pterm.Println()
 		for _, o := range prm.commands {
 			pterm.Info.Printfln("Command:  %s , Usage: %s", o.String(), o.PrintHelp())

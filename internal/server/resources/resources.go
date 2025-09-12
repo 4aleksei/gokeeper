@@ -4,6 +4,7 @@ package resources
 import (
 	"context"
 
+	"github.com/4aleksei/gokeeper/internal/common/aescoder"
 	"github.com/4aleksei/gokeeper/internal/common/cryptocerts"
 	"github.com/4aleksei/gokeeper/internal/common/datacrypto"
 	"github.com/4aleksei/gokeeper/internal/common/logger"
@@ -20,8 +21,8 @@ type (
 		GetData(context.Context, string) (*store.UserDataCrypt, error)
 	}
 	resourceEncoder interface {
-		Encrypt(*store.UserData) (*store.UserDataCrypt, error)
-		Decrypt(*store.UserDataCrypt) (*store.UserData, error)
+		Encrypt(*store.UserData) (*store.UserDataCrypt, *aescoder.KeyAES, error)
+		Decrypt(*store.UserDataCrypt) (*store.UserData, *aescoder.KeyAES, error)
 	}
 
 	handleResources struct {
