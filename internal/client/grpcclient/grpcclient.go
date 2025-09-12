@@ -4,6 +4,7 @@ package grpcclient
 import (
 	"context"
 	"crypto/x509"
+	"io"
 	"net"
 	"os"
 	"time"
@@ -110,8 +111,9 @@ func sendStream(ctx context.Context, client *agentClient, req *transaction.Reque
 
 	switch v := req.Command.(type) {
 	case transaction.StreamData:
-
-		stream, err := client.client.UploadData(ctxReq)
+		md := metadata.New(map[string]string{"authorization": v.Token.Token})
+		ctxReqMd := metadata.NewOutgoingContext(ctxReq, md)
+		stream, err := client.client.UploadData(ctxReqMd)
 		if err != nil {
 			return nil, err
 		}
@@ -141,6 +143,36 @@ func sendStream(ctx context.Context, client *agentClient, req *transaction.Reque
 		}
 
 		return &transaction.Response{Resp: transaction.UUIDData{UUID: resp.GetUuid()}}, nil
+
+	case transaction.GetStreamData:
+
+		md := metadata.New(map[string]string{"authorization": v.Token.Token})
+		ctxReqMd := metadata.NewOutgoingContext(ctxReq, md)
+		stream, err := client.client.DownloadData(ctxReqMd, &pb.DownloadRequest{Uuid: v.UUID.UUID})
+		if err != nil {
+			return nil, err
+		}
+		var tx transaction.UserData
+		var firstP bool
+		defer close(v.Input)
+		for {
+			chunk, err := stream.Recv()
+			if err == io.EOF {
+				break // End of stream
+			}
+			if err != nil {
+				return nil, err
+			}
+			v.Input <- chunk.GetData()
+
+			if !firstP {
+				tx.MetaData = chunk.Metadata
+				tx.TypeData = int(chunk.GetType())
+				firstP = true
+			}
+		}
+
+		return &transaction.Response{Resp: tx}, nil
 	}
 
 	return nil, transaction.ErrBadTypeCommand

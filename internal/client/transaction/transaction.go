@@ -50,6 +50,12 @@ type (
 		Output   chan []byte
 	}
 
+	GetStreamData struct {
+		Token TokenUser
+		UUID  UUIDData
+		Input chan []byte
+	}
+
 	Request struct {
 		Command any
 	}
