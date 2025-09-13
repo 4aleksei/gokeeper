@@ -13,7 +13,6 @@ import (
 	"github.com/4aleksei/gokeeper/internal/common/logger"
 	"github.com/4aleksei/gokeeper/internal/common/store"
 	"github.com/4aleksei/gokeeper/internal/common/store/cache"
-	"github.com/4aleksei/gokeeper/internal/common/utils/random"
 	"github.com/4aleksei/gokeeper/internal/server/config"
 	"github.com/4aleksei/gokeeper/internal/server/grpcserver/interceptor"
 	"github.com/4aleksei/gokeeper/internal/server/service"
@@ -226,6 +225,15 @@ func TestInsertData(t *testing.T) {
 
 }
 
+func generateTest(size int) ([]byte, error) {
+	var res []byte
+	strTest := "testin "
+	for a := 0; a < size/len(strTest); a++ {
+		res = append(res, []byte(strTest)...)
+	}
+	return res, nil
+}
+
 func TestInsertStreamData(t *testing.T) {
 	initNew()
 	l, _ := logger.New(logger.Config{Level: "debug"})
@@ -273,8 +281,9 @@ func TestInsertStreamData(t *testing.T) {
 		dataStream []byte
 		metadata   string
 	}
-	file, err := random.GenerateRandom(2048)
+	file, err := generateTest(4000)
 	require.NoError(t, err)
+	fmt.Println("GENERATED", len(file))
 	dataTest1 := dataST{typeData: 2, dataStream: file, metadata: "meta_file"}
 
 	tests := []struct {

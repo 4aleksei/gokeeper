@@ -3,6 +3,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,17 +35,25 @@ func Run() error {
 
 	gService := service.New(storageRes.Store, storageRes.Enc, l.Logger, cfg)
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+	defer stop()
+
 	grpcServ, errG := grpcserver.New(gService, l, cfg)
 	if errG != nil {
 		l.Logger.Error("Error server grpc construct:", zap.Error(errG))
 		return errG
 	}
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	sig := <-sigs
+	<-ctx.Done()
 
-	l.Logger.Info("Server is shutting down...", zap.String("signal", sig.String()))
+	stop()
+	fmt.Println("signal received")
+
+	//sigs := make(chan os.Signal, 1)
+	//signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	//sig := <-sigs
+
+	l.Logger.Info("Server is shutting down...")
 
 	grpcServ.StopServ()
 

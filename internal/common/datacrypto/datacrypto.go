@@ -40,14 +40,14 @@ func (d *DataCryptDecrypt) Encrypt(data *store.UserData) (*store.UserDataCrypt, 
 	if err != nil {
 		return nil, nil, err
 	}
-	wrD.Write([]byte(data.UserData))
+	wrD.WriteOne([]byte(data.UserData))
 
 	var wMe bytes.Buffer
 	wrMe, err := aescoder.NewWriter(&wMe, key)
 	if err != nil {
 		return nil, nil, err
 	}
-	wrMe.Write([]byte(data.MetaData))
+	wrMe.WriteOne([]byte(data.MetaData))
 	dataEnc.UserDataEn = make([]byte, wData.Len())
 	dataEnc.MetaDataEn = make([]byte, wMe.Len())
 	copy(dataEnc.UserDataEn, wData.Bytes())

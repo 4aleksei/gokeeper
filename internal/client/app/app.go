@@ -3,6 +3,9 @@ package app
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/4aleksei/gokeeper/internal/client/config"
 	"github.com/4aleksei/gokeeper/internal/client/grpcclient"
@@ -36,7 +39,18 @@ func Run() error {
 		promt.AddCommand(command.New(srvV, "AddData", "AddData type{'login','card'} 'userdata' 'metadata'", commands.CommandData)),
 		promt.AddCommand(command.New(srvV, "GetData", "GetData uuid", commands.CommandGetData)),
 		promt.AddCommand(command.New(srvV, "UploadData", "UploadData type{'text','binary'} 'metadata' 'filename of data'", commands.CommandUploadData)),
+		promt.AddCommand(command.New(srvV, "DownloadData", "DownloadData uuid", commands.CommandDownloadData)),
 	)
 
-	return pr.Loop(context.Background())
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
+	defer stop()
+
+	go func() {
+		err = pr.Loop(ctx)
+	}()
+
+	<-ctx.Done()
+
+	stop()
+	return err
 }

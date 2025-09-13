@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/4aleksei/gokeeper/internal/common/aescoder"
+	"github.com/4aleksei/gokeeper/internal/common/streams/encoders/aesstream"
 	"github.com/4aleksei/gokeeper/internal/common/streams/sources"
 	"github.com/4aleksei/gokeeper/internal/common/streams/sources/readwrite"
 	"github.com/4aleksei/gokeeper/internal/common/streams/sources/singlefile"
@@ -33,6 +34,7 @@ func NewWrite(filename string, key *aescoder.KeyAES) *LongtermfileWrite {
 	lw := &LongtermfileWrite{
 		writer: sources.CreateWriter(sources.WithDestinationWriter(singlefile.NewWriter(filename)),
 			sources.WithSourceWriter(&readwrite.ByteWriter{}),
+			sources.WithMiddleWriter(aesstream.NewWriter(key)),
 		),
 		filename: filename,
 	}
@@ -43,6 +45,7 @@ func NewRead(filename string, key *aescoder.KeyAES) *LongtermfileRead {
 	lr := &LongtermfileRead{
 		reader: sources.CreateReader(sources.WithDestinationReader(&readwrite.ByteReader{}),
 			sources.WithSourceReader(singlefile.NewReader(filename)),
+			sources.WithMiddleReader(aesstream.NewReader(key)),
 		),
 		filename: filename,
 	}
@@ -75,6 +78,7 @@ func (l *LongtermfileWrite) CloseWrite() error {
 }
 
 func (l *LongtermfileWrite) WriteData(b []byte) (int, error) {
+
 	return l.writer.WriteData(b)
 }
 

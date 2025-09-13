@@ -88,10 +88,27 @@ func NewReader(r io.ReadCloser, key *KeyAES) (*AesReader, error) {
 func (h *AesReader) Read(p []byte) (int, error) {
 	n, err := h.r.Read(p)
 	if n > 0 {
-		_, err := h.aesgcm.Open(p[0:], h.nonce, p, nil)
-		return len(p), err
+		np, err := h.aesgcm.Open(p[:0], h.nonce, p[:n], nil)
+		return len(np), err
 	}
 	return n, err
+
+	/*
+		n, err := h.r.Read(p)
+		fmt.Println("READ FILE", n)
+		if err != nil {
+			return n, err
+		}
+
+		if n > 0 {
+			np, err := h.aesgcm.Open(nil, h.nonce, p[:n], nil)
+			if err != nil {
+				return 0, err
+			}
+			copy(p, np)
+			return len(p), nil
+		}
+		return n, err*/
 }
 
 func (h *AesReader) ReadOne(p []byte) ([]byte, error) {
@@ -138,6 +155,14 @@ func NewWriter(w io.Writer, key *KeyAES) (*AesWriter, error) {
 }
 
 func (a *AesWriter) Write(p []byte) (int, error) {
+	if p == nil {
+		return 0, nil
+	}
+	k := a.aesgcm.Seal(nil, a.nonce, p, nil)
+	return a.w.Write(k)
+}
+
+func (a *AesWriter) WriteOne(p []byte) (int, error) {
 	if p == nil {
 		return 0, nil
 	}

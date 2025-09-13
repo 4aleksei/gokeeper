@@ -115,3 +115,21 @@ func CommandUploadData(ctx context.Context, srv *service.HandleService, s ...str
 		responses.AddUUID(uuid),
 	)
 }
+
+func CommandDownloadData(ctx context.Context, srv *service.HandleService, s ...string) *responses.Respond {
+	if len(s) < 2 {
+		return responses.New(
+			responses.AddError(ErrParamsNotEnough),
+		)
+	}
+
+	data, err := srv.DownloadData(ctx, s[0], s[1])
+	if err != nil {
+		return responses.New(
+			responses.AddError(err),
+		)
+	}
+	return responses.New(
+		responses.AddData(data.TypeData, data.Data, data.MetaData),
+	)
+}

@@ -155,14 +155,11 @@ func openWriteFile(ctx context.Context, filename string) (chan []byte, error) {
 				return
 
 			default:
-
 				_, errW = file.Write(res)
-
 				if errW != nil {
 					return
 				}
 			}
-
 		}
 	}()
 	return ch, nil
@@ -186,6 +183,7 @@ func (s *HandleService) DownloadData(ctx context.Context, token string, uuid str
 	if !ok {
 		return nil, transaction.ErrBadTypeResponse
 	}
+	str.Data = filename
 	return &str, nil
 
 }

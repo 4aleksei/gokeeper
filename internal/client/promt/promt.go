@@ -56,7 +56,6 @@ func New(options ...func(*Promt)) *Promt {
 
 func (p *Promt) Loop(ctx context.Context) error {
 	for {
-
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -76,7 +75,6 @@ func (p *Promt) Loop(ctx context.Context) error {
 			v, ok := p.commands[fields[0]]
 			if !ok {
 				pterm.Printfln("Unknow command %s\n", fields[0])
-
 				continue
 			}
 

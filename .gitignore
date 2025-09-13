@@ -8,6 +8,7 @@
 *.so
 *.dylib
 *.pem
+*.data
 cmd/client/client
 cmd/server/server
 
