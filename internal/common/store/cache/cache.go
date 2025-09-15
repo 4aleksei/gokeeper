@@ -14,7 +14,7 @@ import (
 )
 
 type (
-	Store struct {
+	StoreCache struct {
 		users     sync.Map
 		usersData cacheStore
 		l         *zap.Logger
@@ -35,8 +35,8 @@ var (
 	ErrNoDB          = errors.New("no db")
 )
 
-func New(l *zap.Logger) *Store {
-	stor := &Store{l: l}
+func New(l *zap.Logger) *StoreCache {
+	stor := &StoreCache{l: l}
 
 	stor.usersData.uuidUsers = make(map[uint64][]*store.UserDataCrypt)
 	stor.usersData.dataUsers = make(map[string]*store.UserDataCrypt)
@@ -82,7 +82,7 @@ func getId() uint64 {
 	return idUsers.Load()
 }
 
-func (s *Store) AddUser(ctx context.Context, user string, pass string) (*store.User, error) {
+func (s *StoreCache) AddUser(ctx context.Context, user string, pass string) (*store.User, error) {
 	userSt := &store.User{
 		Name:     user,
 		HashPass: pass,
@@ -96,7 +96,7 @@ func (s *Store) AddUser(ctx context.Context, user string, pass string) (*store.U
 	return userSt, nil
 }
 
-func (s *Store) GetUser(ctx context.Context, user string) (*store.User, error) {
+func (s *StoreCache) GetUser(ctx context.Context, user string) (*store.User, error) {
 	val, ok := s.users.Load(user)
 	s.l.Debug("Get user", zap.String("Name", user), zap.Bool("GETED", ok))
 	if ok {
@@ -105,7 +105,7 @@ func (s *Store) GetUser(ctx context.Context, user string) (*store.User, error) {
 	return nil, ErrUserNotFound
 }
 
-func (s *Store) AddData(ctx context.Context, userdata *store.UserDataCrypt) error {
+func (s *StoreCache) AddData(ctx context.Context, userdata *store.UserDataCrypt) error {
 	uuid := uuid.New()
 	userdata.Uuid = uuid.String()
 	userdata.TimeStamp = time.Now()
@@ -116,7 +116,7 @@ func (s *Store) AddData(ctx context.Context, userdata *store.UserDataCrypt) erro
 	return nil
 }
 
-func (s *Store) GetData(ctx context.Context, uuid string) (*store.UserDataCrypt, error) {
+func (s *StoreCache) GetData(ctx context.Context, uuid string) (*store.UserDataCrypt, error) {
 	data, err := s.usersData.GetData(uuid)
 	if err != nil {
 		return nil, ErrValueNotFound

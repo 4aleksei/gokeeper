@@ -6,8 +6,9 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/4aleksei/gokeeper/internal/common/aescoder"
 	"github.com/4aleksei/gokeeper/internal/common/datafile"
+	"github.com/4aleksei/gokeeper/internal/common/interfaces/encoder"
+	"github.com/4aleksei/gokeeper/internal/common/interfaces/storage"
 	"github.com/4aleksei/gokeeper/internal/common/store"
 	"github.com/4aleksei/gokeeper/internal/common/utils/random"
 	"github.com/4aleksei/gokeeper/internal/server/config"
@@ -17,23 +18,12 @@ import (
 )
 
 type (
-	serverStorage interface {
-		AddUser(context.Context, string, string) (*store.User, error)
-		GetUser(context.Context, string) (*store.User, error)
-		AddData(context.Context, *store.UserDataCrypt) error
-		GetData(context.Context, string) (*store.UserDataCrypt, error)
-	}
-	serverEncoder interface {
-		Encrypt(*store.UserData) (*store.UserDataCrypt, *aescoder.KeyAES, error)
-		Decrypt(*store.UserDataCrypt) (*store.UserData, *aescoder.KeyAES, error)
-	}
-
 	HandlerService struct {
-		store   serverStorage
+		store   storage.ServerStorage
 		l       *zap.Logger
 		auth    *jwtauth.AuthService
 		cfg     *config.Config
-		encoder serverEncoder
+		encoder encoder.ServerEncoder
 	}
 )
 
@@ -42,7 +32,7 @@ var (
 	ErrIncorectUserId = errors.New("error, id user error")
 )
 
-func New(s serverStorage, enc serverEncoder, l *zap.Logger, c *config.Config) *HandlerService {
+func New(s storage.ServerStorage, enc encoder.ServerEncoder, l *zap.Logger, c *config.Config) *HandlerService {
 	return &HandlerService{
 		store:   s,
 		l:       l,

@@ -8,6 +8,8 @@ import (
 	"net"
 	"testing"
 
+	"sync"
+
 	"github.com/4aleksei/gokeeper/internal/common/cryptocerts"
 	"github.com/4aleksei/gokeeper/internal/common/datacrypto"
 	"github.com/4aleksei/gokeeper/internal/common/logger"
@@ -29,46 +31,91 @@ import (
 
 const bufSize = 1024 * 1024
 
-var lis *bufconn.Listener
+var onceCfg sync.Once
 
-func initNew() {
-	lis = bufconn.Listen(bufSize)
+type (
+	testServer struct {
+		lis        *bufconn.Listener
+		st         *service.HandlerService
+		l          *logger.ZapLogger
+		client     pb.KeeperServiceClient
+		grpcServer *grpc.Server
+		conn       *grpc.ClientConn
+	}
+)
+
+func newTestServer() *testServer {
+	l := createLogger()
+	st := createService(l)
+	tt := &testServer{
+		lis: bufconn.Listen(bufSize),
+		l:   createLogger(),
+		st:  st,
+	}
+	tt.client = tt.startGRCPServerClient()
+
+	return tt
 }
 
-func bufDialer(context.Context, string) (net.Conn, error) {
-	return lis.Dial()
+func (tt *testServer) bufDialer(context.Context, string) (net.Conn, error) {
+	return tt.lis.Dial()
 }
 
-func TestServerSingle(t *testing.T) {
-	initNew()
+func createLogger() *logger.ZapLogger {
 	l, _ := logger.New(logger.Config{Level: "debug"})
-	grpcServer := grpc.NewServer()
-	cfg, _ := config.New()
+	return l
+}
+
+var cfg *config.Config
+
+func createService(l *logger.ZapLogger) *service.HandlerService {
+	onceCfg.Do(func() {
+		cfg, _ = config.New()
+	})
 
 	pr, pub, _ := cryptocerts.GenerateKey()
 	crypto := datacrypto.New(pr, pub)
 
-	st := service.New(cache.New(l.Logger), crypto, l.Logger, cfg)
+	return service.New(cache.New(l.Logger), crypto, l.Logger, cfg)
+}
 
-	pb.RegisterKeeperServiceServer(grpcServer, KeeperServiceService{serv: st,
-		srv: grpcServer,
-		l:   l,
+func (tt *testServer) startGRCPServerClient() pb.KeeperServiceClient {
+
+	interceptor := interceptor.NewAuthInterceptor(tt.st)
+	tt.grpcServer = grpc.NewServer(grpc.ChainUnaryInterceptor(
+
+		grpc.UnaryServerInterceptor(interceptor.UnaryAuthMiddleware),
+	),
+		grpc.ChainStreamInterceptor())
+
+	pb.RegisterKeeperServiceServer(tt.grpcServer, KeeperServiceService{serv: tt.st,
+		srv: tt.grpcServer,
+		l:   tt.l,
 	})
 
 	go func() {
-		if err := grpcServer.Serve(lis); err != nil {
+		if err := tt.grpcServer.Serve(tt.lis); err != nil {
 			log.Fatal(err)
 		}
 	}()
-	defer grpcServer.Stop() // Ensure server is stopped after test
-
-	conn, err := grpc.NewClient("passthrough:///bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	//	defer grpcServer.Stop() // Ensure server is stopped after test
+	var err error
+	tt.conn, err = grpc.NewClient("passthrough:///bufnet", grpc.WithContextDialer(tt.bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer conn.Close()
+	//	defer conn.Close()
 
-	client := pb.NewKeeperServiceClient(conn)
+	return pb.NewKeeperServiceClient(tt.conn)
+}
+
+func TestServerSingle(t *testing.T) {
+
+	testServ := newTestServer()
+	defer func() {
+		testServ.conn.Close()
+		testServ.grpcServer.Stop()
+	}()
 
 	tests := []struct {
 		name    string
@@ -91,9 +138,9 @@ func TestServerSingle(t *testing.T) {
 			var err error
 			switch tt.oper {
 			case "LoginUser":
-				val, err = client.LoginUser(context.Background(), &pb.LoginRequest{Name: tt.user.Name, Password: tt.user.HashPass})
+				val, err = testServ.client.LoginUser(context.Background(), &pb.LoginRequest{Name: tt.user.Name, Password: tt.user.HashPass})
 			case "RegisterUser":
-				val, err = client.RegisterUser(context.Background(), &pb.LoginRequest{Name: tt.user.Name, Password: tt.user.HashPass})
+				val, err = testServ.client.RegisterUser(context.Background(), &pb.LoginRequest{Name: tt.user.Name, Password: tt.user.HashPass})
 			default:
 				log.Fatal("error operation")
 			}
@@ -113,7 +160,7 @@ func TestServerSingle(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				id, errCh := st.CheckToken(context.Background(), val.GetToken())
+				id, errCh := testServ.st.CheckToken(context.Background(), val.GetToken())
 				require.NoError(t, errCh)
 
 				assert.Equal(t, tt.wantId, id)
@@ -123,42 +170,13 @@ func TestServerSingle(t *testing.T) {
 }
 
 func TestInsertData(t *testing.T) {
-	initNew()
-	l, _ := logger.New(logger.Config{Level: "debug"})
-	cfg := &config.Config{Key: "Secret"}
-	pr, pub, _ := cryptocerts.GenerateKey()
-	crypto := datacrypto.New(pr, pub)
-
-	st := service.New(cache.New(l.Logger), crypto, l.Logger, cfg)
-
-	interceptor := interceptor.NewAuthInterceptor(st)
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
-
-		grpc.UnaryServerInterceptor(interceptor.UnaryAuthMiddleware),
-	),
-		grpc.ChainStreamInterceptor())
-
-	pb.RegisterKeeperServiceServer(grpcServer, KeeperServiceService{serv: st,
-		srv: grpcServer,
-		l:   l,
-	})
-
-	go func() {
-		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatal(err)
-		}
+	testServ := newTestServer()
+	defer func() {
+		testServ.conn.Close()
+		testServ.grpcServer.Stop()
 	}()
-	defer grpcServer.Stop()
 
-	conn, err := grpc.NewClient("passthrough:///bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-	var login *pb.LoginResponse
-	client := pb.NewKeeperServiceClient(conn)
-
-	login, err = client.RegisterUser(context.Background(), &pb.LoginRequest{Name: "user1", Password: "abcd"})
+	login, err := testServ.client.RegisterUser(context.Background(), &pb.LoginRequest{Name: "user1", Password: "abcd"})
 	require.NoError(t, err)
 
 	type dataST struct {
@@ -187,7 +205,7 @@ func TestInsertData(t *testing.T) {
 			var err error
 			switch tt.oper {
 			case "AddData":
-				val, err = client.AddData(ctxReq, &pb.UserData{Type: pb.TypeData(tt.data.typeData), Data: tt.data.data, Metadata: tt.data.metadata})
+				val, err = testServ.client.AddData(ctxReq, &pb.UserData{Type: pb.TypeData(tt.data.typeData), Data: tt.data.data, Metadata: tt.data.metadata})
 
 			default:
 				log.Fatal("error operation")
@@ -209,7 +227,7 @@ func TestInsertData(t *testing.T) {
 				require.NoError(t, err)
 				fmt.Println(val.GetUuid())
 
-				valData, err := client.GetData(ctxReq, &pb.DownloadRequest{Uuid: val.GetUuid()})
+				valData, err := testServ.client.GetData(ctxReq, &pb.DownloadRequest{Uuid: val.GetUuid()})
 
 				require.NoError(t, err)
 				resp := dataST{
@@ -235,45 +253,13 @@ func generateTest(size int) ([]byte, error) {
 }
 
 func TestInsertStreamData(t *testing.T) {
-	initNew()
-	l, _ := logger.New(logger.Config{Level: "debug"})
-	cfg := &config.Config{Key: "Secret"}
-	pr, pub, _ := cryptocerts.GenerateKey()
-	crypto := datacrypto.New(pr, pub)
-
-	st := service.New(cache.New(l.Logger), crypto, l.Logger, cfg)
-
-	interceptor := interceptor.NewAuthInterceptor(st)
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
-
-		grpc.UnaryServerInterceptor(interceptor.UnaryAuthMiddleware),
-	),
-		grpc.ChainStreamInterceptor(
-
-			grpc.StreamServerInterceptor(interceptor.StreamAuthMiddleware),
-		))
-
-	pb.RegisterKeeperServiceServer(grpcServer, KeeperServiceService{serv: st,
-		srv: grpcServer,
-		l:   l,
-	})
-
-	go func() {
-		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatal(err)
-		}
+	testServ := newTestServer()
+	defer func() {
+		testServ.conn.Close()
+		testServ.grpcServer.Stop()
 	}()
-	defer grpcServer.Stop()
 
-	conn, err := grpc.NewClient("passthrough:///bufnet", grpc.WithContextDialer(bufDialer), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-	var login *pb.LoginResponse
-	client := pb.NewKeeperServiceClient(conn)
-
-	login, err = client.RegisterUser(context.Background(), &pb.LoginRequest{Name: "user1", Password: "abcd"})
+	login, err := testServ.client.RegisterUser(context.Background(), &pb.LoginRequest{Name: "user1", Password: "abcd"})
 	require.NoError(t, err)
 
 	type dataST struct {
@@ -306,7 +292,7 @@ func TestInsertStreamData(t *testing.T) {
 			switch tt.oper {
 			case "UploadData":
 
-				stream, err := client.UploadData(ctxReq)
+				stream, err := testServ.client.UploadData(ctxReq)
 				require.NoError(t, err)
 
 				//for {
@@ -342,11 +328,7 @@ func TestInsertStreamData(t *testing.T) {
 				require.NoError(t, err)
 				fmt.Println(val.GetUuid())
 
-				/*		valData, err := client.GetData(ctxReq, &pb.DownloadRequest{Uuid: val.GetUuid()})
-						require.NoError(t, err)
-
-				*/
-				stream, err := client.DownloadData(ctxReq, &pb.DownloadRequest{Uuid: val.GetUuid()})
+				stream, err := testServ.client.DownloadData(ctxReq, &pb.DownloadRequest{Uuid: val.GetUuid()})
 				require.NoError(t, err)
 
 				var resp dataST

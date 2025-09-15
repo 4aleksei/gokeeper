@@ -4,7 +4,7 @@ package command
 import (
 	"context"
 
-	"github.com/4aleksei/gokeeper/internal/client/promt/responses"
+	"github.com/4aleksei/gokeeper/internal/client/prompt/responses"
 	"github.com/4aleksei/gokeeper/internal/client/service"
 )
 

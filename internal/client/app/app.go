@@ -9,9 +9,9 @@ import (
 
 	"github.com/4aleksei/gokeeper/internal/client/config"
 	"github.com/4aleksei/gokeeper/internal/client/grpcclient"
-	"github.com/4aleksei/gokeeper/internal/client/promt"
-	"github.com/4aleksei/gokeeper/internal/client/promt/command"
-	"github.com/4aleksei/gokeeper/internal/client/promt/commands"
+	"github.com/4aleksei/gokeeper/internal/client/prompt"
+	"github.com/4aleksei/gokeeper/internal/client/prompt/command"
+	"github.com/4aleksei/gokeeper/internal/client/prompt/commands"
 	"github.com/4aleksei/gokeeper/internal/client/service"
 	"github.com/4aleksei/gokeeper/internal/common/logger"
 )
@@ -33,13 +33,13 @@ func Run() error {
 	}
 	srvV := service.New(client)
 
-	pr := promt.New(
-		promt.AddCommand(command.New(srvV, "Login", "Login name password ", commands.CommandLogin)),
-		promt.AddCommand(command.New(srvV, "Register", "Register name password ", commands.CommandRegister)),
-		promt.AddCommand(command.New(srvV, "AddData", "AddData type{'login','card'} 'userdata' 'metadata'", commands.CommandData)),
-		promt.AddCommand(command.New(srvV, "GetData", "GetData uuid", commands.CommandGetData)),
-		promt.AddCommand(command.New(srvV, "UploadData", "UploadData type{'text','binary'} 'metadata' 'filename of data'", commands.CommandUploadData)),
-		promt.AddCommand(command.New(srvV, "DownloadData", "DownloadData uuid", commands.CommandDownloadData)),
+	pr := prompt.New(
+		prompt.AddCommand(command.New(srvV, "Login", "Login name password ", commands.CommandLogin)),
+		prompt.AddCommand(command.New(srvV, "Register", "Register name password ", commands.CommandRegister)),
+		prompt.AddCommand(command.New(srvV, "AddData", "AddData type{'login','card'} 'userdata' 'metadata'", commands.CommandData)),
+		prompt.AddCommand(command.New(srvV, "GetData", "GetData uuid", commands.CommandGetData)),
+		prompt.AddCommand(command.New(srvV, "UploadData", "UploadData type{'text','binary'} 'metadata' 'filename of data'", commands.CommandUploadData)),
+		prompt.AddCommand(command.New(srvV, "DownloadData", "DownloadData uuid", commands.CommandDownloadData)),
 	)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)

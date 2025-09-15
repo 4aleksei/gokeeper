@@ -18,11 +18,9 @@ type (
 )
 
 func New(c *grpcclient.KeeperServiceService) *HandleService {
-
 	return &HandleService{
 		client: c,
 	}
-
 }
 
 func (s *HandleService) SendRegister(ctx context.Context, name string, pass string) (string, error) {

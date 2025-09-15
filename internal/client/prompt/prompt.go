@@ -1,12 +1,12 @@
-// Package promt
-package promt
+// Package prompt
+package prompt
 
 import (
 	"context"
 	"strings"
 
-	"github.com/4aleksei/gokeeper/internal/client/promt/command"
-	"github.com/4aleksei/gokeeper/internal/client/promt/responses"
+	"github.com/4aleksei/gokeeper/internal/client/prompt/command"
+	"github.com/4aleksei/gokeeper/internal/client/prompt/responses"
 	"github.com/4aleksei/gokeeper/internal/client/service"
 	"github.com/4aleksei/gokeeper/internal/common/store"
 	"github.com/pterm/pterm"
@@ -19,24 +19,24 @@ type (
 		Exec(context.Context, ...string) *responses.Respond
 	}
 
-	Promt struct {
+	Prompt struct {
 		commands map[string]PromptCommand
 		token    string
 		name     string
 	}
 )
 
-func AddCommand(comm *command.Command) func(*Promt) {
+func AddCommand(comm *command.Command) func(*Prompt) {
 
-	return func(p *Promt) {
+	return func(p *Prompt) {
 
 		p.commands[comm.String()] = comm
 
 	}
 }
 
-func New(options ...func(*Promt)) *Promt {
-	prm := &Promt{
+func New(options ...func(*Prompt)) *Prompt {
+	prm := &Prompt{
 		commands: make(map[string]PromptCommand),
 	}
 	options = append(options, AddCommand(command.New(nil, "Help", "list all commands", func(context.Context, *service.HandleService, ...string) *responses.Respond {
@@ -54,7 +54,7 @@ func New(options ...func(*Promt)) *Promt {
 	return prm
 }
 
-func (p *Promt) Loop(ctx context.Context) error {
+func (p *Prompt) Loop(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -88,7 +88,7 @@ func (p *Promt) Loop(ctx context.Context) error {
 	}
 }
 
-func (p *Promt) getResponse(resp *responses.Respond) {
+func (p *Prompt) getResponse(resp *responses.Respond) {
 	if resp == nil {
 		return
 	}
