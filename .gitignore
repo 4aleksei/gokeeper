@@ -7,6 +7,11 @@
 *.dll
 *.so
 *.dylib
+*.pem
+*.data
+cmd/client/client
+cmd/server/server
+
 
 # Test binary, built with `go test -c`
 *.test

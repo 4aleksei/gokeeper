@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package grpcgokeeper;
+
+option go_package = "github.com/4aleksei/gokeeper/pkg/api/proto";
+  
+  enum TypeData {
+      LOGINDATA = 0;
+      CARDDATA = 1;
+      TEXTDATA = 2;
+      BINARYDATA = 3;
+  }
+
+message LoginRequest  {
+  string name = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1; // e.g., JWT
+}
+
+message UserData  {
+  TypeData type = 1;      // тип данных
+  string data = 2;
+  string metadata = 3;
+}
+
+
+message ResponseAddData  {
+  string uuid = 1;
+}
+
+message ListRequest {
+  
+}
+
+
+message DownloadRequest {
+  string uuid = 1;
+}
+
+message DataChunk {
+  bytes data = 1; // The actual byte data for the chunk
+  int64 offset = 2; // Optional: for tracking progress/resuming
+  string metadata = 3; //Optional
+  TypeData type = 4;      // тип данных
+  int64 size = 5;
+}
+
+
+service KeeperService {
+  rpc LoginUser(LoginRequest) returns (LoginResponse);
+  rpc RegisterUser(LoginRequest) returns (LoginResponse);
+  rpc AddData(UserData) returns (ResponseAddData);
+  rpc GetData(DownloadRequest) returns (UserData);
+
+
+
+  rpc UploadData(stream DataChunk) returns (ResponseAddData);
+  rpc DownloadData (DownloadRequest) returns (stream DataChunk);
+
+  rpc GetList(ListRequest) returns (stream UserData);
+
+}
